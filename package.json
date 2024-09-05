@@ -1,0 +1,22 @@
+{
+  "name": "com.aceland.taskutils",
+  "displayName": "AceLand Task Utils",
+  "version": "0.1.0",
+  "author": {
+    "name": "Parsue - AceLand Workshop",
+    "url": "http://www.parsue.io/"
+  },
+  "unity": "2022.3",
+  "description": "AceLand Task Utils is a local supporting services dependency",
+  "keywords": [
+    "aceland",
+    "task",
+    "utils"
+  ],
+  "dependencies": {
+    "com.annulusgames.burst-linq": "1.2.0",
+    "com.cysharp.unitask": "2.5.3",
+    "com.unity.nuget.newtonsoft-json": "3.2.1"
+  },
+  "documentationUrl": ""
+}
