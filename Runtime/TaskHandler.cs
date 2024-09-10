@@ -4,7 +4,7 @@ using AceLand.Library.Extensions;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 
-namespace AceLand.TasksUtils
+namespace AceLand.TaskUtils
 {
     public static class TaskHandler
     {

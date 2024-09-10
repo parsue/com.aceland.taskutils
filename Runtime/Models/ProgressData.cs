@@ -1,4 +1,4 @@
-namespace AceLand.TasksUtils.Models
+namespace AceLand.TaskUtils.Models
 {
     public class ProgressData
     {

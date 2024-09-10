@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace AceLand.TasksUtils
+namespace AceLand.TaskUtils
 {
     internal static class TaskHelper
     {

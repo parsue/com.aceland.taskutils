@@ -2,7 +2,7 @@ using System;
 using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
 
-namespace AceLand.TasksUtils.PromiseAwaiter
+namespace AceLand.TaskUtils.PromiseAwaiter
 {
     public static class PromiseExtensions
     {

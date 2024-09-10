@@ -1,9 +1,10 @@
 using System;
 using System.Runtime.CompilerServices;
-using AMVR.LocalTools.Disposable;
+using System.Threading.Tasks;
+using AceLand.Library.Disposable;
 using Cysharp.Threading.Tasks;
 
-namespace AceLand.TasksUtils.PromiseAwaiter
+namespace AceLand.TaskUtils.PromiseAwaiter
 {
     public sealed class Promise<T> : DisposableObject, INotifyCompletion
     {

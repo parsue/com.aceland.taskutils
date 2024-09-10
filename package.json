@@ -1,7 +1,7 @@
 {
   "name": "com.aceland.taskutils",
   "displayName": "AceLand Task Utils",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "author": {
     "name": "Parsue - AceLand Workshop",
     "url": "http://www.parsue.io/"
@@ -14,9 +14,8 @@
     "utils"
   ],
   "dependencies": {
-    "com.annulusgames.burst-linq": "1.2.0",
-    "com.cysharp.unitask": "2.5.3",
-    "com.unity.nuget.newtonsoft-json": "3.2.1"
+    "com.aceland.library": "1.0.0",
+    "com.cysharp.unitask": "2.5.3"
   },
   "documentationUrl": ""
 }

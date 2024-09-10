@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace AceLand.TasksUtils.Models
+namespace AceLand.TaskUtils.Models
 {
     public class ErrorMessage
     {
