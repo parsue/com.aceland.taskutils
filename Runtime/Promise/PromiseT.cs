@@ -7,6 +7,11 @@ namespace AceLand.TasksUtils.PromiseAwaiter
 {
     public sealed class Promise<T> : DisposableObject, INotifyCompletion
     {
+        private Promise(UniTask<T> task)
+        {
+            HandleTask(task);
+        }
+        
         internal Promise(Action<T> action, UniTask<T> task)
         {
             Then(action);
@@ -98,5 +103,8 @@ namespace AceLand.TasksUtils.PromiseAwaiter
                 configureAwait: false
             );
         }
+
+        public static implicit operator Promise<T>(Task<T> task) => new(task.AsUniTask());
+        public static implicit operator Promise<T>(UniTask<T> task) => new(task);
     }
 }
