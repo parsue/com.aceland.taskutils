@@ -1,7 +1,7 @@
 using AceLand.TasksUtils.Models;
 using System;
 
-namespace AceLand.TasksUtils.Promise
+namespace AceLand.TasksUtils.PromiseAwaiter
 {
     public abstract class ProgressPromiseHandler<T> : PromiseHandler<T> 
         where T : ProgressPromiseHandler<T>
