@@ -1,6 +1,6 @@
 using System;
 
-namespace AceLand.TasksUtils.Promise
+namespace AceLand.TasksUtils.PromiseAwaiter
 {
     public abstract class PromiseHandler<T> : IDisposable 
         where T : PromiseHandler<T>
