@@ -1,12 +1,13 @@
 using System;
-using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using AceLand.Library.Disposable;
 using Cysharp.Threading.Tasks;
 
 namespace AceLand.TaskUtils.PromiseAwaiter
 {
-    private Promise(UniTask task)
+    public class Promise : DisposableObject
+    {
+        private Promise(UniTask task)
         {
             HandleTask(task);
         }
