@@ -50,6 +50,7 @@ namespace AceLand.TaskUtils.PromiseAwaiter
             Final(continuation);
         }
 
+        public bool GetResult() => IsCompleted;
         public Promise GetAwaiter() => this;
         
         private Action OnSuccess { get; set; }
