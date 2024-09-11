@@ -6,14 +6,18 @@ using Cysharp.Threading.Tasks;
 
 namespace AceLand.TaskUtils.PromiseAwaiter
 {
-    public sealed class Promise<T> : DisposableObject, INotifyCompletion
-    {
         private Promise(UniTask<T> task)
         {
             HandleTask(task);
         }
         
         internal Promise(Action<T> action, UniTask<T> task)
+        {
+            Then(action);
+            HandleTask(task);
+        }
+        
+        internal Promise(Func<T, Task> action, UniTask<T> task)
         {
             Then(action);
             HandleTask(task);
@@ -56,6 +60,7 @@ namespace AceLand.TaskUtils.PromiseAwaiter
         public Promise<T> GetAwaiter() => this;
         
         private Action<T> OnSuccess { get; set; }
+        private Func<T, Task> OnSuccessTask { get; set; }
         private Action<Exception> OnError { get; set; }
         private Action OnFinal { get; set; }
         public bool IsCompleted { get; private set; }
@@ -65,6 +70,12 @@ namespace AceLand.TaskUtils.PromiseAwaiter
         {
             if (Disposed || IsCompleted) return this;
             OnSuccess += onSuccess;
+            return this;
+        }
+        public Promise<T> Then(Func<T, Task> onSuccess)
+        {
+            if (Disposed || IsCompleted) return this;
+            OnSuccessTask += onSuccess;
             return this;
         }
         public Promise<T> Catch(Action<Exception> onError)
@@ -89,6 +100,8 @@ namespace AceLand.TaskUtils.PromiseAwaiter
                     {
                         Result = await task;
                         OnSuccess?.Invoke(Result);
+                        if (OnSuccessTask is null) return;
+                        await OnSuccessTask(Result);
                     }
                     catch (Exception e)
                     {
