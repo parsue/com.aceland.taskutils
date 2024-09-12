@@ -1,12 +1,15 @@
 using System;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using AceLand.Library.Disposable;
 using Cysharp.Threading.Tasks;
 
 namespace AceLand.TaskUtils.PromiseAwaiter
 {
-    public class Promise<T> : DisposableObject
+    public class Promise<T> : DisposableObject, INotifyCompletion
     {
+        #region Constructors
+        
         private Promise(UniTask<T> task)
         {
             HandleTask(task);
@@ -35,14 +38,19 @@ namespace AceLand.TaskUtils.PromiseAwaiter
             Final(action);
             HandleTask(task);
         }
+
+        #endregion
         
         protected override void DisposeManagedResources()
         {
             Result = default;
             OnSuccess = null;
+            OnSuccessTask = null;
             OnError = null;
             OnFinal = null;
         }
+
+        #region Awaitable
 
         public void OnCompleted(Action continuation)
         {
@@ -50,7 +58,7 @@ namespace AceLand.TaskUtils.PromiseAwaiter
             
             if (IsCompleted)
             {
-                continuation.Invoke();
+                continuation?.Invoke();
                 return;
             }
 
@@ -59,13 +67,15 @@ namespace AceLand.TaskUtils.PromiseAwaiter
 
         public T GetResult() => Result;
         public Promise<T> GetAwaiter() => this;
+        public bool IsCompleted { get; private set; }
+        public T Result { get; private set; }
+
+        #endregion
         
         private Action<T> OnSuccess { get; set; }
         private Func<T, Task> OnSuccessTask { get; set; }
         private Action<Exception> OnError { get; set; }
         private Action OnFinal { get; set; }
-        public bool IsCompleted { get; private set; }
-        public T Result { get; private set; }
 
         public Promise<T> Then(Action<T> onSuccess)
         {
