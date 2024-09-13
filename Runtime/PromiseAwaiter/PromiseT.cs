@@ -45,28 +45,16 @@ namespace AceLand.TaskUtils.PromiseAwaiter
             OnFinal = null;
         }
 
-        public void OnCompleted(Action continuation)
-        {
-            if (Disposed) return;
-            
-            if (IsCompleted)
-            {
-                continuation.Invoke();
-                return;
-            }
-
-            Final(continuation);
-        }
-
-        public T GetResult() => Result;
         public Promise<T> GetAwaiter() => this;
-        
         private Action<T> OnSuccess { get; set; }
         private Func<T, Task> OnSuccessTask { get; set; }
         private Action<Exception> OnError { get; set; }
         private Action OnFinal { get; set; }
         public bool IsCompleted { get; private set; }
         public T Result { get; private set; }
+        public T GetResult() => Result;
+
+        private TaskCompletionSource<T> _taskCompletionSource;
 
         public Promise<T> Then(Action<T> onSuccess)
         {
@@ -95,19 +83,24 @@ namespace AceLand.TaskUtils.PromiseAwaiter
             OnFinal += onFinal;
             return this;
         }
-        
-        public Task<T> AsTask()
-        {
-            var tcs = new TaskCompletionSource<T>();
-            if (IsCompleted)tcs.TrySetResult(Result);
-            else OnCompleted(() => tcs.TrySetResult(Result));
-            return tcs.Task;
-        }
 
-        public UniTask<T> AsUniTask() => AsTask().AsUniTask();
+        public void OnCompleted(Action continuation)
+        {
+            if (Disposed) return;
+            
+            if (IsCompleted)
+            {
+                continuation.Invoke();
+                return;
+            }
+
+            Final(continuation);
+        }
 
         private void HandleTask(UniTask<T> task)
         {
+            _taskCompletionSource = new TaskCompletionSource<T>();
+            
             UniTask.RunOnThreadPool(async () =>
                 {
                     await UniTask.Yield();
@@ -115,12 +108,16 @@ namespace AceLand.TaskUtils.PromiseAwaiter
                     {
                         Result = await task;
                         OnSuccess?.Invoke(Result);
-                        if (OnSuccessTask is null) return;
-                        await OnSuccessTask(Result);
+                        
+                        if (OnSuccessTask is not null)
+                            await OnSuccessTask(Result);
+                        
+                        _taskCompletionSource.TrySetResult(Result);
                     }
                     catch (Exception e)
                     {
                         OnError?.Invoke(e);
+                        _taskCompletionSource.SetException(e);
                     }
                     finally
                     {
@@ -135,7 +132,7 @@ namespace AceLand.TaskUtils.PromiseAwaiter
 
         public static implicit operator Promise<T>(Task<T> task) => new(task.AsUniTask());
         public static implicit operator Promise<T>(UniTask<T> task) => new(task);
-        public static implicit operator Task<T>(Promise<T> promise) => promise.AsTask();
-        public static implicit operator UniTask<T>(Promise<T> promise) => promise.AsUniTask();
+        public static implicit operator Task<T>(Promise<T> promise) => promise._taskCompletionSource.Task;
+        public static implicit operator UniTask<T>(Promise<T> promise) => promise._taskCompletionSource.Task.AsUniTask();
     }
 }
