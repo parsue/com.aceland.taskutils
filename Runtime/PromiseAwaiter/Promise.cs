@@ -6,10 +6,8 @@ using Cysharp.Threading.Tasks;
 
 namespace AceLand.TaskUtils.PromiseAwaiter
 {
-    public class Promise : DisposableObject, INotifyCompletion
+    public sealed class Promise : DisposableObject, INotifyCompletion
     {
-        #region Constructors
-        
         private Promise(UniTask task)
         {
             HandleTask(task);
@@ -33,18 +31,13 @@ namespace AceLand.TaskUtils.PromiseAwaiter
             Catch(action);
             HandleTask(task);
         }
-
-        #endregion
         
         protected override void DisposeManagedResources()
         {
             OnSuccess = null;
-            OnSuccessTask = null;
             OnError = null;
             OnFinal = null;
         }
-
-        #region Awaitable
 
         public void OnCompleted(Action continuation)
         {
@@ -52,7 +45,7 @@ namespace AceLand.TaskUtils.PromiseAwaiter
 
             if (IsCompleted)
             {
-                continuation?.Invoke();
+                continuation.Invoke();
                 return;
             }
 
@@ -61,14 +54,12 @@ namespace AceLand.TaskUtils.PromiseAwaiter
 
         public bool GetResult() => IsCompleted;
         public Promise GetAwaiter() => this;
-        public bool IsCompleted { get; private set; }
-
-        #endregion
         
         private Action OnSuccess { get; set; }
         private Func<Task> OnSuccessTask { get; set; }
         private Action<Exception> OnError { get; set; }
         private Action OnFinal { get; set; }
+        public bool IsCompleted { get; private set; }
 
         public Promise Then(Action onSuccess)
         {
@@ -76,24 +67,37 @@ namespace AceLand.TaskUtils.PromiseAwaiter
             OnSuccess += onSuccess;
             return this;
         }
+        
         public Promise Then(Func<Task> onSuccess)
         {
             if (Disposed || IsCompleted) return this;
             OnSuccessTask += onSuccess;
             return this;
         }
+        
         public Promise Catch(Action<Exception> onError)
         {
             if (Disposed || IsCompleted) return this;
             OnError += onError;
             return this;
         }
+        
         public Promise Final(Action onFinal)
         {
             if (Disposed || IsCompleted) return this;
             OnFinal += onFinal;
             return this;
         }
+        
+        public Task AsTask()
+        {
+            var tcs = new TaskCompletionSource<bool>();
+            if (IsCompleted) tcs.TrySetResult(true);
+            else OnCompleted(() => tcs.TrySetResult(true));
+            return tcs.Task;
+        }
+
+        public UniTask AsUniTask() => AsTask().AsUniTask();
 
         private void HandleTask(UniTask task)
         {
@@ -121,8 +125,10 @@ namespace AceLand.TaskUtils.PromiseAwaiter
                 configureAwait: false
             );
         }
-        
+
         public static implicit operator Promise(Task task) => new(task.AsUniTask());
         public static implicit operator Promise(UniTask task) => new(task);
+        public static implicit operator Task(Promise promise) => promise.AsTask();
+        public static implicit operator UniTask(Promise promise) => promise.AsUniTask();
     }
 }
