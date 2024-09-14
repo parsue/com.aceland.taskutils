@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using AceLand.Library.Disposable;
@@ -123,9 +124,16 @@ namespace AceLand.TaskUtils.PromiseAwaiter
             );
         }
 
+        public static Promise WhenAll(Promise[] promises) =>
+            UniTask.WhenAll(promises.Select(p => p.AsUniTask()).ToArray());
+        public static Promise<T[]> WhenAll<T>(Promise<T>[] promises) =>
+            UniTask.WhenAll(promises.Select(p => p.AsUniTask()).ToArray());
+
+        internal Task AsTask() => _taskCompletionSource.Task;
+        internal UniTask AsUniTask() => _taskCompletionSource.Task.AsUniTask();
         public static implicit operator Promise(Task task) => new(task.AsUniTask());
         public static implicit operator Promise(UniTask task) => new(task);
-        public static implicit operator Task(Promise promise) => promise._taskCompletionSource.Task;
-        public static implicit operator UniTask(Promise promise) => promise._taskCompletionSource.Task.AsUniTask();
+        public static implicit operator Task(Promise promise) => promise.AsTask();
+        public static implicit operator UniTask(Promise promise) => promise.AsUniTask();
     }
 }

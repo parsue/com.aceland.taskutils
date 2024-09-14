@@ -130,9 +130,12 @@ namespace AceLand.TaskUtils.PromiseAwaiter
             );
         }
 
+        internal Task<T> AsTask() => _taskCompletionSource.Task;
+        internal UniTask<T> AsUniTask() => _taskCompletionSource.Task.AsUniTask();
         public static implicit operator Promise<T>(Task<T> task) => new(task.AsUniTask());
         public static implicit operator Promise<T>(UniTask<T> task) => new(task);
-        public static implicit operator Task<T>(Promise<T> promise) => promise._taskCompletionSource.Task;
-        public static implicit operator UniTask<T>(Promise<T> promise) => promise._taskCompletionSource.Task.AsUniTask();
+        public static implicit operator Promise(Promise<T> promise) => promise.AsTask();
+        public static implicit operator Task<T>(Promise<T> promise) => promise.AsTask();
+        public static implicit operator UniTask<T>(Promise<T> promise) => promise.AsUniTask();
     }
 }
