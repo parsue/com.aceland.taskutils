@@ -14,8 +14,7 @@
     "utils"
   ],
   "dependencies": {
-    "com.aceland.library": "1.0.0",
-    "com.cysharp.unitask": "2.5.3"
+    "com.aceland.library": "1.0.0"
   },
   "documentationUrl": ""
 }

@@ -2,36 +2,35 @@ using System;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using AceLand.Library.Disposable;
-using Cysharp.Threading.Tasks;
 
 namespace AceLand.TaskUtils.PromiseAwaiter
 {
     public sealed class Promise<T> : DisposableObject, INotifyCompletion
     {
-        private Promise(UniTask<T> task)
+        internal Promise(Task<T> task)
         {
             HandleTask(task);
         }
         
-        internal Promise(Action<T> action, UniTask<T> task)
+        internal Promise(Action<T> action, Task<T> task)
         {
             Then(action);
             HandleTask(task);
         }
         
-        internal Promise(Func<T, Task> action, UniTask<T> task)
+        internal Promise(Func<T, Task> action, Task<T> task)
         {
             Then(action);
             HandleTask(task);
         }
 
-        internal Promise(Action<Exception> action, UniTask<T> task)
+        internal Promise(Action<Exception> action, Task<T> task)
         {
             Catch(action);
             HandleTask(task);
         }
 
-        internal Promise(Action action, UniTask<T> task)
+        internal Promise(Action action, Task<T> task)
         {
             Final(action);
             HandleTask(task);
@@ -97,13 +96,13 @@ namespace AceLand.TaskUtils.PromiseAwaiter
             Final(continuation);
         }
 
-        private void HandleTask(UniTask<T> task)
+        private void HandleTask(Task<T> task)
         {
             _taskCompletionSource = new TaskCompletionSource<T>();
             
-            UniTask.RunOnThreadPool(async () =>
+            Task.Run(async () =>
                 {
-                    await UniTask.Yield();
+                    await Task.Yield();
                     try
                     {
                         Result = await task;
@@ -117,25 +116,21 @@ namespace AceLand.TaskUtils.PromiseAwaiter
                     catch (Exception e)
                     {
                         OnError?.Invoke(e);
-                        _taskCompletionSource.SetException(e);
+                        _taskCompletionSource.TrySetException(e);
                     }
                     finally
                     {
-                        OnFinal?.Invoke();
                         IsCompleted = true;
+                        OnFinal?.Invoke();
                     }
                 },
-                cancellationToken: TaskHandler.ApplicationAliveToken,
-                configureAwait: false
+                TaskHandler.ApplicationAliveToken
             );
         }
 
         internal Task<T> AsTask() => _taskCompletionSource.Task;
-        internal UniTask<T> AsUniTask() => _taskCompletionSource.Task.AsUniTask();
-        public static implicit operator Promise<T>(Task<T> task) => new(task.AsUniTask());
-        public static implicit operator Promise<T>(UniTask<T> task) => new(task);
+        public static implicit operator Promise<T>(Task<T> task) => new(task);
         public static implicit operator Promise(Promise<T> promise) => promise.AsTask();
         public static implicit operator Task<T>(Promise<T> promise) => promise.AsTask();
-        public static implicit operator UniTask<T>(Promise<T> promise) => promise.AsUniTask();
     }
 }

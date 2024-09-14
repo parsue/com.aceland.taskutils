@@ -3,31 +3,30 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using AceLand.Library.Disposable;
-using Cysharp.Threading.Tasks;
 
 namespace AceLand.TaskUtils.PromiseAwaiter
 {
     public sealed class Promise : DisposableObject, INotifyCompletion
     {
-        private Promise(UniTask task)
+        internal Promise(Task task)
         {
             HandleTask(task);
         }
         
-        internal Promise(Action action, UniTask task, bool isFinal)
+        internal Promise(Action action, Task task, bool isFinal)
         {
             if (isFinal) Final(action);
             else Then(action);
             HandleTask(task);
         }
         
-        internal Promise(Func<Task> action, UniTask task)
+        internal Promise(Func<Task> action, Task task)
         {
             Then(action);
             HandleTask(task);
         }
 
-        internal Promise(Action<Exception> action, UniTask task)
+        internal Promise(Action<Exception> action, Task task)
         {
             Catch(action);
             HandleTask(task);
@@ -91,13 +90,13 @@ namespace AceLand.TaskUtils.PromiseAwaiter
             Final(continuation);
         }
 
-        private void HandleTask(UniTask task)
+        private void HandleTask(Task task)
         {
             _taskCompletionSource = new TaskCompletionSource<bool>();
             
-            UniTask.RunOnThreadPool(async () =>
+            Task.Run(async () =>
                 {
-                    await UniTask.Yield();
+                    await Task.Yield();
                     try
                     {
                         await task;
@@ -111,29 +110,25 @@ namespace AceLand.TaskUtils.PromiseAwaiter
                     catch (Exception e)
                     {
                         OnError?.Invoke(e);
-                        _taskCompletionSource.SetException(e);
+                        _taskCompletionSource.TrySetException(e);
                     }
                     finally
                     {
-                        OnFinal?.Invoke();
                         IsCompleted = true;
+                        OnFinal?.Invoke();
                     }
                 },
-                cancellationToken: TaskHandler.ApplicationAliveToken,
-                configureAwait: false
+                TaskHandler.ApplicationAliveToken
             );
         }
 
         public static Promise WhenAll(Promise[] promises) =>
-            UniTask.WhenAll(promises.Select(p => p.AsUniTask()).ToArray());
+            Task.WhenAll(promises.Select(promise => promise.AsTask()).ToArray());
         public static Promise<T[]> WhenAll<T>(Promise<T>[] promises) =>
-            UniTask.WhenAll(promises.Select(p => p.AsUniTask()).ToArray());
+            Task.WhenAll(promises.Select(p => p.AsTask()).ToArray());
 
         internal Task AsTask() => _taskCompletionSource.Task;
-        internal UniTask AsUniTask() => _taskCompletionSource.Task.AsUniTask();
-        public static implicit operator Promise(Task task) => new(task.AsUniTask());
-        public static implicit operator Promise(UniTask task) => new(task);
+        public static implicit operator Promise(Task task) => new(task);
         public static implicit operator Task(Promise promise) => promise.AsTask();
-        public static implicit operator UniTask(Promise promise) => promise.AsUniTask();
     }
 }

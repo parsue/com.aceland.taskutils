@@ -1,15 +1,13 @@
 using System;
 using System.Threading;
+using System.Threading.Tasks;
 using AceLand.TaskUtils.PromiseAwaiter;
-using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 namespace AceLand.TaskUtils
 {
     public static class TaskHandler
     {
-        private const int MAX_THREAD_POOL_SIZE = 128;
-        
         public static CancellationToken ApplicationAliveToken => _applicationAliveTokenSource.Token;
 
         private static CancellationTokenSource _applicationAliveTokenSource;
@@ -19,16 +17,15 @@ namespace AceLand.TaskUtils
         private static void Initial()
         {
             Debug.Log("Task Handler is Active");
-            Debug.Log($"Max Pool Size: {MAX_THREAD_POOL_SIZE}");
-            TaskPool.SetMaxPoolSize(MAX_THREAD_POOL_SIZE);
             _applicationAliveTokenSource = new CancellationTokenSource();
             OnApplicationEnd().Catch(Debug.LogError);
         }
 
-        private static async UniTask OnApplicationEnd()
+        private static async Task OnApplicationEnd()
         {
             Debug.Log("Application Alive Task is running ...");
-            await UniTask.WaitUntil(() => !Application.isPlaying);
+            while (Application.isPlaying)
+                await Task.Yield();
             OnApplicationQuit?.Invoke();
             _applicationAliveTokenSource?.Cancel();
             _applicationAliveTokenSource?.Dispose();
