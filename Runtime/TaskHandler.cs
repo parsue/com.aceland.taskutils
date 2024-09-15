@@ -18,14 +18,20 @@ namespace AceLand.TaskUtils
         {
             Debug.Log("Task Handler is Active");
             _applicationAliveTokenSource = new CancellationTokenSource();
-            OnApplicationEnd().Catch(Debug.LogError);
+            ApplicationAliveTask()
+                .Catch(Debug.LogError)
+                .Final(OnApplicationEnd);
         }
 
-        private static async Task OnApplicationEnd()
+        private static async Task ApplicationAliveTask()
         {
             Debug.Log("Application Alive Task is running ...");
             while (Application.isPlaying)
                 await Task.Yield();
+        }
+
+        private static void OnApplicationEnd()
+        {
             OnApplicationQuit?.Invoke();
             _applicationAliveTokenSource?.Cancel();
             _applicationAliveTokenSource?.Dispose();

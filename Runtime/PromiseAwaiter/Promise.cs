@@ -1,12 +1,12 @@
 using System;
 using System.Linq;
-using System.Runtime.CompilerServices;
+using System.Threading;
 using System.Threading.Tasks;
-using AceLand.Library.Disposable;
+using AceLand.TaskUtils.PromiseAwaiter.Base;
 
 namespace AceLand.TaskUtils.PromiseAwaiter
 {
-    public sealed class Promise : DisposableObject, INotifyCompletion
+    public sealed class Promise : Awaiter<bool>
     {
         internal Promise(Task task)
         {
@@ -34,20 +34,21 @@ namespace AceLand.TaskUtils.PromiseAwaiter
         
         protected override void DisposeManagedResources()
         {
+            base.DisposeManagedResources();
             OnSuccess = null;
             OnError = null;
             OnFinal = null;
+            _tokenSource?.Cancel();
+            _tokenSource?.Dispose();
         }
         
         private Action OnSuccess { get; set; }
         private Func<Task> OnSuccessTask { get; set; }
         private Action<Exception> OnError { get; set; }
         private Action OnFinal { get; set; }
-        public bool IsCompleted { get; private set; }
-        public bool GetResult() => IsCompleted;
-        public Promise GetAwaiter() => this;
-
-        private TaskCompletionSource<bool> _taskCompletionSource;
+        public override bool GetResult() => IsCompleted;
+        
+        private CancellationTokenSource _tokenSource;
 
         public Promise Then(Action onSuccess)
         {
@@ -77,48 +78,48 @@ namespace AceLand.TaskUtils.PromiseAwaiter
             return this;
         }
 
-        public void OnCompleted(Action continuation)
-        {
-            if (Disposed) return;
-
-            if (IsCompleted)
-            {
-                continuation.Invoke();
-                return;
-            }
-
-            Final(continuation);
-        }
-
         private void HandleTask(Task task)
         {
-            _taskCompletionSource = new TaskCompletionSource<bool>();
-            
+            _tokenSource = new CancellationTokenSource();
+            var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(
+                _tokenSource.Token,
+                TaskHandler.ApplicationAliveToken
+            );
+
             Task.Run(async () =>
                 {
                     await Task.Yield();
                     try
                     {
-                        await task;
+                        if (task.Status is not TaskStatus.Running)
+                            task.Start();
+                        
+                        while (!task.IsCompleted)
+                        {
+                            linkedCts.Token.ThrowIfCancellationRequested();
+                            Thread.Yield();
+                        }
+                        
                         OnSuccess?.Invoke();
                         
                         if (OnSuccessTask is not null)
                             await OnSuccessTask();
                         
-                        _taskCompletionSource.TrySetResult(true);
+                        TaskCompletionSource.TrySetResult(true);
                     }
                     catch (Exception e)
                     {
                         OnError?.Invoke(e);
-                        _taskCompletionSource.TrySetException(e);
+                        TaskCompletionSource.TrySetException(e);
                     }
                     finally
                     {
                         IsCompleted = true;
                         OnFinal?.Invoke();
+                        Continuation?.Invoke();
                     }
                 },
-                TaskHandler.ApplicationAliveToken
+                linkedCts.Token
             );
         }
 
@@ -127,7 +128,7 @@ namespace AceLand.TaskUtils.PromiseAwaiter
         public static Promise<T[]> WhenAll<T>(Promise<T>[] promises) =>
             Task.WhenAll(promises.Select(p => p.AsTask()).ToArray());
 
-        internal Task AsTask() => _taskCompletionSource.Task;
+        internal Task AsTask() => TaskCompletionSource.Task;
         public static implicit operator Promise(Task task) => new(task);
         public static implicit operator Task(Promise promise) => promise.AsTask();
     }

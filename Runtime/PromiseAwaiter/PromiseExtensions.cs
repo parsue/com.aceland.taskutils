@@ -13,8 +13,6 @@ namespace AceLand.TaskUtils.PromiseAwaiter
             new(onError, task);
         public static Promise<T> Final<T>(this Task<T> task, Action onFinal) =>
             new(onFinal, task);
-        public static Promise<T> OnCompleted<T>(this Task<T> task, Action onFinal) =>
-            new(onFinal, task);
         
         public static Promise Then(this Task task, Action onSuccess) =>
             new(onSuccess, task, false);
@@ -23,8 +21,6 @@ namespace AceLand.TaskUtils.PromiseAwaiter
         public static Promise Catch(this Task task, Action<Exception> onError) =>
             new(onError, task);
         public static Promise Final(this Task task, Action onFinal) =>
-            new(onFinal, task, true);
-        public static Promise OnCompleted(this Task task, Action onFinal) =>
             new(onFinal, task, true);
     }
 }

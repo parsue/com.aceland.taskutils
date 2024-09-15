@@ -1,11 +1,11 @@
 using System;
-using System.Runtime.CompilerServices;
+using System.Threading;
 using System.Threading.Tasks;
-using AceLand.Library.Disposable;
+using AceLand.TaskUtils.PromiseAwaiter.Base;
 
 namespace AceLand.TaskUtils.PromiseAwaiter
 {
-    public sealed class Promise<T> : DisposableObject, INotifyCompletion
+    public sealed class Promise<T> : Awaiter<T>
     {
         internal Promise(Task<T> task)
         {
@@ -38,22 +38,20 @@ namespace AceLand.TaskUtils.PromiseAwaiter
         
         protected override void DisposeManagedResources()
         {
-            Result = default;
+            base.DisposeManagedResources();
             OnSuccess = null;
             OnError = null;
             OnFinal = null;
+            _tokenSource?.Cancel();
+            _tokenSource?.Dispose();
         }
 
-        public Promise<T> GetAwaiter() => this;
         private Action<T> OnSuccess { get; set; }
         private Func<T, Task> OnSuccessTask { get; set; }
         private Action<Exception> OnError { get; set; }
         private Action OnFinal { get; set; }
-        public bool IsCompleted { get; private set; }
-        public T Result { get; private set; }
-        public T GetResult() => Result;
-
-        private TaskCompletionSource<T> _taskCompletionSource;
+        
+        private CancellationTokenSource _tokenSource;
 
         public Promise<T> Then(Action<T> onSuccess)
         {
@@ -83,54 +81,61 @@ namespace AceLand.TaskUtils.PromiseAwaiter
             return this;
         }
 
-        public void OnCompleted(Action continuation)
+        public void Cancel()
         {
-            if (Disposed) return;
-            
-            if (IsCompleted)
-            {
-                continuation.Invoke();
-                return;
-            }
-
-            Final(continuation);
+            _tokenSource?.Cancel();
+            _tokenSource?.Dispose();
         }
 
         private void HandleTask(Task<T> task)
         {
-            _taskCompletionSource = new TaskCompletionSource<T>();
+            _tokenSource = new CancellationTokenSource();
+            var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(
+                _tokenSource.Token,
+                TaskHandler.ApplicationAliveToken
+            );
             
             Task.Run(async () =>
                 {
                     await Task.Yield();
                     try
                     {
-                        Result = await task;
+                        if (task.Status is not TaskStatus.Running)
+                            task.Start();
+                        
+                        while (!task.IsCompleted)
+                        {
+                            linkedCts.Token.ThrowIfCancellationRequested();
+                            Thread.Yield();
+                        }
+                        
+                        Result = task.Result;
                         OnSuccess?.Invoke(Result);
                         
                         if (OnSuccessTask is not null)
                             await OnSuccessTask(Result);
                         
-                        _taskCompletionSource.TrySetResult(Result);
+                        TaskCompletionSource.TrySetResult(Result);
                     }
                     catch (Exception e)
                     {
                         OnError?.Invoke(e);
-                        _taskCompletionSource.TrySetException(e);
+                        TaskCompletionSource.TrySetException(e);
                     }
                     finally
                     {
                         IsCompleted = true;
                         OnFinal?.Invoke();
+                        Continuation?.Invoke();
                     }
                 },
-                TaskHandler.ApplicationAliveToken
+                linkedCts.Token
             );
         }
 
-        internal Task<T> AsTask() => _taskCompletionSource.Task;
-        public static implicit operator Promise<T>(Task<T> task) => new(task);
+        internal Task<T> AsTask() => TaskCompletionSource.Task;
         public static implicit operator Promise(Promise<T> promise) => promise.AsTask();
+        public static implicit operator Promise<T>(Task<T> task) => new(task);
         public static implicit operator Task<T>(Promise<T> promise) => promise.AsTask();
     }
 }
