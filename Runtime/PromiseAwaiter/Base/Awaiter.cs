@@ -14,8 +14,8 @@ namespace AceLand.TaskUtils.PromiseAwaiter.Base
         public virtual Awaiter<T> GetAwaiter() => this;
         public virtual T GetResult() => Result;
         
-        protected virtual bool IsCompleted { get; set; }
-        protected virtual T Result { get; set; }
+        public virtual bool IsCompleted { get; set; }
+        public  virtual T Result { get; set; }
 
         private protected readonly TaskCompletionSource<T> TaskCompletionSource;
         private protected Action Continuation;
