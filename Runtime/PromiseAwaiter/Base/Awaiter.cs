@@ -8,6 +8,8 @@ namespace AceLand.TaskUtils.PromiseAwaiter.Base
     public abstract class Awaiter<T> : DisposableObject, INotifyCompletion
     {
         internal Awaiter() => TaskCompletionSource = new TaskCompletionSource<T>();
+
+        ~Awaiter() => Dispose(false);
         
         public virtual Awaiter<T> GetAwaiter() => this;
         public virtual T GetResult() => Result;
