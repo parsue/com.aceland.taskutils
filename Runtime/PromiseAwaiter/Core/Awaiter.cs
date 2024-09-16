@@ -3,7 +3,7 @@ using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using AceLand.Library.Disposable;
 
-namespace AceLand.TaskUtils.PromiseAwaiter.Base
+namespace AceLand.TaskUtils.PromiseAwaiter.Core
 {
     public abstract class Awaiter<T> : DisposableObject, INotifyCompletion
     {
@@ -15,12 +15,17 @@ namespace AceLand.TaskUtils.PromiseAwaiter.Base
         public virtual T GetResult() => Result;
         
         public virtual bool IsCompleted { get; set; }
-        public  virtual T Result { get; set; }
+        public virtual T Result { get; set; }
 
         private protected readonly TaskCompletionSource<T> TaskCompletionSource;
         private protected Action Continuation;
 
         protected override void DisposeManagedResources()
+        {
+            Cancel();
+        }
+
+        public virtual void Cancel()
         {
             Continuation = null;
         }

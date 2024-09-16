@@ -2,7 +2,7 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using AceLand.TaskUtils.PromiseAwaiter.Base;
+using AceLand.TaskUtils.PromiseAwaiter.Core;
 
 namespace AceLand.TaskUtils.PromiseAwaiter
 {
@@ -35,7 +35,13 @@ namespace AceLand.TaskUtils.PromiseAwaiter
         protected override void DisposeManagedResources()
         {
             base.DisposeManagedResources();
+            Cancel();
+        }
+
+        public override void Cancel()
+        {
             OnSuccess = null;
+            OnSuccessTask = null;
             OnError = null;
             OnFinal = null;
             _tokenSource?.Cancel();
@@ -46,7 +52,6 @@ namespace AceLand.TaskUtils.PromiseAwaiter
         private Func<Task> OnSuccessTask { get; set; }
         private Action<Exception> OnError { get; set; }
         private Action OnFinal { get; set; }
-        public override bool GetResult() => IsCompleted;
         
         private CancellationTokenSource _tokenSource;
 
@@ -115,6 +120,7 @@ namespace AceLand.TaskUtils.PromiseAwaiter
                     finally
                     {
                         IsCompleted = true;
+                        Result = true;
                         OnFinal?.Invoke();
                         Continuation?.Invoke();
                     }
