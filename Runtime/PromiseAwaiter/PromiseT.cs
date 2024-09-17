@@ -70,31 +70,25 @@ namespace AceLand.TaskUtils.PromiseAwaiter
         private void HandleTask(Task<T> task)
         {
             _tokenSource = new CancellationTokenSource();
-            var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(
-                _tokenSource.Token,
-                TaskHandler.ApplicationAliveToken
-            );
-            
+            var linkedToken = TaskHandler.LinkedOrApplicationAliveToken(_tokenSource, out var linkedTokenSource);
+
             Task.Run(async () =>
                 {
                     await Task.Yield();
                     try
                     {
-                        if (task.Status is not TaskStatus.Running)
+                        if (task.Status is < TaskStatus.WaitingForActivation)
                             task.Start();
-                        
+
                         while (!task.IsCompleted)
-                        {
-                            linkedCts.Token.ThrowIfCancellationRequested();
                             Thread.Yield();
-                        }
-                        
+
                         Result = task.Result;
                         OnSuccess?.Invoke(Result);
-                        
+
                         if (OnSuccessTask is not null)
                             await OnSuccessTask(Result);
-                        
+
                         TaskCompletionSource.TrySetResult(Result);
                     }
                     catch (Exception e)
@@ -107,9 +101,10 @@ namespace AceLand.TaskUtils.PromiseAwaiter
                         IsCompleted = true;
                         OnFinal?.Invoke();
                         Continuation?.Invoke();
+                        linkedTokenSource?.Dispose();
                     }
                 },
-                linkedCts.Token
+                linkedToken
             );
         }
 

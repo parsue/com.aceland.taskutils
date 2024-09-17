@@ -10,6 +10,22 @@ namespace AceLand.TaskUtils
     {
         public static CancellationToken ApplicationAliveToken => _applicationAliveTokenSource.Token;
 
+        public static CancellationToken LinkedOrApplicationAliveToken(CancellationTokenSource tokenSource,
+            out CancellationTokenSource linkedTokenSource)
+        {
+            if (tokenSource == null)
+            {
+                linkedTokenSource = null;
+                return ApplicationAliveToken;
+            }
+            
+            linkedTokenSource = CancellationTokenSource.CreateLinkedTokenSource(
+                tokenSource.Token,
+                ApplicationAliveToken
+            );
+            return linkedTokenSource.Token;
+        }
+
         private static CancellationTokenSource _applicationAliveTokenSource;
         private static event Action OnApplicationQuit;
 
@@ -19,8 +35,7 @@ namespace AceLand.TaskUtils
             Debug.Log("Task Handler is Active");
             _applicationAliveTokenSource = new CancellationTokenSource();
             ApplicationAliveTask()
-                .Catch(Debug.LogError)
-                .Final(OnApplicationEnd);
+                .Catch(Debug.LogError);
         }
 
         private static async Task ApplicationAliveTask()
@@ -28,13 +43,15 @@ namespace AceLand.TaskUtils
             Debug.Log("Application Alive Task is running ...");
             while (Application.isPlaying)
                 await Task.Yield();
+            OnApplicationEnd();
         }
 
         private static void OnApplicationEnd()
         {
-            OnApplicationQuit?.Invoke();
             _applicationAliveTokenSource?.Cancel();
             _applicationAliveTokenSource?.Dispose();
+            OnApplicationQuit?.Invoke();
+            Debug.Log("Application End");
         }
 
         public static void AddApplicationQuitListener(Action listener) => OnApplicationQuit += listener;
