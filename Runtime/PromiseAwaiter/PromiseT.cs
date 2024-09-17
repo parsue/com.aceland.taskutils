@@ -7,32 +7,12 @@ namespace AceLand.TaskUtils.PromiseAwaiter
 {
     public sealed class Promise<T> : Awaiter<T>
     {
-        internal Promise(Task<T> task)
+        internal Promise(Task<T> task, Action<T> thenAction = null, Func<T, Task> thenTask = null, Action<Exception> catchAction = null, Action finalAction = null)
         {
-            HandleTask(task);
-        }
-        
-        internal Promise(Action<T> action, Task<T> task)
-        {
-            Then(action);
-            HandleTask(task);
-        }
-        
-        internal Promise(Func<T, Task> action, Task<T> task)
-        {
-            Then(action);
-            HandleTask(task);
-        }
-
-        internal Promise(Action<Exception> action, Task<T> task)
-        {
-            Catch(action);
-            HandleTask(task);
-        }
-
-        internal Promise(Action action, Task<T> task)
-        {
-            Final(action);
+            if (thenAction is not null) Then(thenAction);
+            if (thenTask is not null) Then(thenTask);
+            if (catchAction is not null) Catch(catchAction);
+            if (finalAction is not null) Final(finalAction);
             HandleTask(task);
         }
         
