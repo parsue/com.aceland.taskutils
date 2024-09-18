@@ -24,6 +24,7 @@ namespace AceLand.TaskUtils.PromiseAwaiter
 
         public override void Cancel()
         {
+            base.Cancel();
             OnSuccess = null;
             OnSuccessTask = null;
             OnError = null;
@@ -70,39 +71,46 @@ namespace AceLand.TaskUtils.PromiseAwaiter
         private void HandleTask(Task<T> task)
         {
             _tokenSource = new CancellationTokenSource();
-            var linkedToken = TaskHandler.LinkedOrApplicationAliveToken(_tokenSource, out var linkedTokenSource);
+            var linkedToken = TaskHandler.LinkedOrApplicationAliveToken(_tokenSource,
+                out var linkedTokenSource);
 
-            Task.Run(async () =>
+            Task.Run(() =>
                 {
-                    await Task.Yield();
-                    try
+                    Thread.Yield();
+
+                    while (!task.IsCompleted)
+                        Thread.Yield();
+
+                    if (task.IsCanceled)
                     {
-                        if (task.Status is < TaskStatus.WaitingForActivation)
-                            task.Start();
-
-                        while (!task.IsCompleted)
-                            Thread.Yield();
-
+                        TaskCompletionSource.TrySetCanceled();
+                    }
+                    else if (task.IsFaulted && task.Exception?.InnerExceptions.Count > 0)
+                    {
+                        foreach (var exception in task.Exception.InnerExceptions)
+                            OnError?.Invoke(exception);
+                        
+                        TaskCompletionSource.TrySetException(task.Exception.InnerExceptions[0]);
+                    }
+                    else if (task.IsCompletedSuccessfully)
+                    {
                         Result = task.Result;
                         OnSuccess?.Invoke(Result);
-
                         if (OnSuccessTask is not null)
-                            await OnSuccessTask(Result);
-
+                        {
+                            var successTasks = OnSuccessTask(Result);
+                            
+                            while (!successTasks.IsCompleted)
+                                Thread.Yield();
+                        }
+                        
                         TaskCompletionSource.TrySetResult(Result);
                     }
-                    catch (Exception e)
-                    {
-                        OnError?.Invoke(e);
-                        TaskCompletionSource.TrySetException(e);
-                    }
-                    finally
-                    {
-                        IsCompleted = true;
-                        OnFinal?.Invoke();
-                        Continuation?.Invoke();
-                        linkedTokenSource?.Dispose();
-                    }
+
+                    IsCompleted = true;
+                    OnFinal?.Invoke();
+                    Continuation?.Invoke();
+                    linkedTokenSource?.Dispose();
                 },
                 linkedToken
             );
