@@ -75,13 +75,11 @@ namespace AceLand.TaskUtils.PromiseAwaiter
             var linkedToken = TaskHandler.LinkedOrApplicationAliveToken(_tokenSource,
                 out var linkedTokenSource);
 
-            if (task.Status is < TaskStatus.WaitingForActivation)
+            if (task.Status < TaskStatus.WaitingForActivation)
                 task.Start();
             
             Task.Run(() =>
                 {
-                    Thread.Yield();
-
                     while (!task.IsCompleted)
                         Thread.Yield();
                     
