@@ -2,7 +2,6 @@
     "name": "AceLand.TaskUtils",
     "rootNamespace": "AceLand.TaskUtils",
     "references": [
-        "GUID:f51ebe6a0ceec4240a699833d6309b23",
         "GUID:0b6e3ff925df76b408774ed4b623807b"
     ],
     "includePlatforms": [],
