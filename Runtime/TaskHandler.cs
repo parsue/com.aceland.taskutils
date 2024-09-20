@@ -1,7 +1,7 @@
 using System;
 using System.Threading;
-using System.Threading.Tasks;
-using AceLand.TaskUtils.PromiseAwaiter;
+using AceLand.Library.Extensions;
+using AceLand.TaskUtils.PlayerLoopSystems;
 using UnityEngine;
 
 namespace AceLand.TaskUtils
@@ -28,26 +28,20 @@ namespace AceLand.TaskUtils
 
         private static CancellationTokenSource _applicationAliveTokenSource;
         private static event Action OnApplicationQuit;
+        private static ApplicationAliveSystem _system;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterAssembliesLoaded)]
         private static void Initial()
         {
             Debug.Log("Task Handler is Active");
+            
             _applicationAliveTokenSource = new CancellationTokenSource();
-            ApplicationAliveTask()
-                .Catch(Debug.LogError);
+            _system = new ApplicationAliveSystem();
         }
 
-        private static async Task ApplicationAliveTask()
+        internal static void OnApplicationEnd()
         {
-            Debug.Log("Application Alive Task is running ...");
-            while (Application.isPlaying)
-                await Task.Yield();
-            OnApplicationEnd();
-        }
-
-        private static void OnApplicationEnd()
-        {
+            _system.SystemStop();
             _applicationAliveTokenSource?.Cancel();
             _applicationAliveTokenSource?.Dispose();
             OnApplicationQuit?.Invoke();

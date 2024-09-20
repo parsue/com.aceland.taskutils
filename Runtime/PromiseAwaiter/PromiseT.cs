@@ -77,9 +77,9 @@ namespace AceLand.TaskUtils.PromiseAwaiter
             if (task.Status < TaskStatus.WaitingForActivation)
                 task.Start();
 
-            Task.Run(() =>
+            Task.Factory.StartNew(() =>
                 {
-                    while (!task.IsCompleted)
+                    while (!linkedToken.IsCancellationRequested && !task.IsCompleted)
                         Thread.Yield();
 
                     if (task.IsCanceled)
@@ -101,7 +101,7 @@ namespace AceLand.TaskUtils.PromiseAwaiter
                         {
                             var successTasks = OnSuccessTask(Result);
                             
-                            while (!successTasks.IsCompleted)
+                            while (!linkedToken.IsCancellationRequested && !successTasks.IsCompleted)
                                 Thread.Yield();
                         }
                         
@@ -113,7 +113,9 @@ namespace AceLand.TaskUtils.PromiseAwaiter
                     Continuation?.Invoke();
                     linkedTokenSource?.Dispose();
                 },
-                linkedToken
+                linkedToken,
+                TaskCreationOptions.LongRunning,
+                TaskScheduler.Default
             );
         }
 
