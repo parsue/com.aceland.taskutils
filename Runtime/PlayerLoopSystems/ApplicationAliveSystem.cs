@@ -1,4 +1,6 @@
-﻿using AceLand.PlayerLoopHack;
+﻿using System;
+using System.Threading;
+using AceLand.PlayerLoopHack;
 using UnityEngine;
 using UnityEngine.LowLevel;
 
@@ -7,17 +9,22 @@ namespace AceLand.TaskUtils.PlayerLoopSystems
     internal class ApplicationAliveSystem : IPlayerLoopSystem
     {
         internal ApplicationAliveSystem() => SystemStart();
+        internal static CancellationTokenSource applicationAliveTokenSource;
+        internal static event Action OnApplicationQuit;
 
         private PlayerLoopSystem _system;
         
         private void SystemStart()
         {
+            Debug.Log("Application Alive System Start");
+            applicationAliveTokenSource = new CancellationTokenSource();
             _system = this.CreatePlayerLoopSystem();
-            _system.InsertSystem(PlayerLoopType.TimeUpdate);
+            _system.InsertSystem(PlayerLoopType.TimeUpdate, 0);
         }
 
-        internal void SystemStop()
+        private void SystemStop()
         {
+            Debug.Log("Application Alive System Stop");
             _system.RemoveSystem(PlayerLoopType.TimeUpdate);
         }
         
@@ -25,7 +32,16 @@ namespace AceLand.TaskUtils.PlayerLoopSystems
         {
             if (Application.isPlaying) return;
             
-            TaskHandler.OnApplicationEnd();
+            OnApplicationEnd();
+        }
+
+        private void OnApplicationEnd()
+        {
+            SystemStop();
+            applicationAliveTokenSource?.Cancel();
+            applicationAliveTokenSource?.Dispose();
+            OnApplicationQuit?.Invoke();
+            Debug.Log("Application End");
         }
     }
 }

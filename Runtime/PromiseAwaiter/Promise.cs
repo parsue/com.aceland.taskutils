@@ -8,7 +8,10 @@ namespace AceLand.TaskUtils.PromiseAwaiter
 {
     public sealed class Promise : Awaiter<bool>
     {
-        internal Promise(Task task, Action thenAction = null, Func<Task> thenTask = null, Action<Exception> catchAction = null, Action finalAction = null)
+        internal Promise(Task task,
+            Action thenAction = null, Func<Task> thenTask = null,
+            Action<Exception> catchAction = null,
+            Action finalAction = null)
         {
             if (thenAction is not null) Then(thenAction);
             if (thenTask is not null) Then(thenTask);
@@ -72,7 +75,7 @@ namespace AceLand.TaskUtils.PromiseAwaiter
         private void HandleTask(Task task)
         {
             _tokenSource = new CancellationTokenSource();
-            var linkedToken = TaskHandler.LinkedOrApplicationAliveToken(_tokenSource,
+            var linkedToken = TaskHelper.LinkedOrApplicationAliveToken(_tokenSource,
                 out var linkedTokenSource);
 
             if (task.Status < TaskStatus.WaitingForActivation)
