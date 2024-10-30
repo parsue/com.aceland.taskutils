@@ -47,7 +47,7 @@ namespace AceLand.TaskUtils.PlayerLoopSystems
             }
         }
 
-        public void Enqueue<T>(Action<T> action, T arg)
+        internal void Enqueue<T>(Action<T> action, T arg)
         {
             lock (_executionQueue)
             {
