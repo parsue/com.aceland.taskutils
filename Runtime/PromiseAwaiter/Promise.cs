@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using AceLand.TaskUtils.PlayerLoopSystems;
 using AceLand.TaskUtils.PromiseAwaiter.Core;
 
 namespace AceLand.TaskUtils.PromiseAwaiter
@@ -44,9 +45,19 @@ namespace AceLand.TaskUtils.PromiseAwaiter
         
         private CancellationTokenSource _tokenSource;
 
+        private bool _isSuccess;
+        private bool _isFail;
+        private Exception _exception;
+
         public Promise Then(Action onSuccess)
         {
-            if (Disposed || IsCompleted) return this;
+            if (Disposed) return this;
+            if (_isSuccess)
+            {
+                onSuccess?.Invoke();
+                return this;
+            }
+
             OnSuccess += onSuccess;
             return this;
         }
@@ -54,20 +65,39 @@ namespace AceLand.TaskUtils.PromiseAwaiter
         public Promise Then(Func<Task> onSuccess)
         {
             if (Disposed || IsCompleted) return this;
+            if (Disposed) return this;
+            if (_isSuccess)
+            {
+                onSuccess?.Invoke();
+                return this;
+            }
+
             OnSuccessTask += onSuccess;
             return this;
         }
         
         public Promise Catch(Action<Exception> onError)
         {
-            if (Disposed || IsCompleted) return this;
+            if (Disposed) return this;
+            if (_isFail)
+            {
+                onError?.Invoke(_exception);
+                return this;
+            }
+
             OnError += onError;
             return this;
         }
         
         public Promise Final(Action onFinal)
         {
-            if (Disposed || IsCompleted) return this;
+            if (Disposed) return this;
+            if (IsCompleted)
+            {
+                onFinal?.Invoke();
+                return this;
+            }
+
             OnFinal += onFinal;
             return this;
         }
@@ -78,28 +108,37 @@ namespace AceLand.TaskUtils.PromiseAwaiter
             var linkedToken = TaskHelper.LinkedOrApplicationAliveToken(_tokenSource,
                 out var linkedTokenSource);
 
-            if (task.Status < TaskStatus.WaitingForActivation)
-                task.Start();
-            
-            Task.Factory.StartNew(() =>
+            task.ContinueWith(t =>
                 {
-                    while (!linkedToken.IsCancellationRequested && !task.IsCompleted)
-                        Thread.Yield();
-                    
-                    if (task.IsCanceled)
+                    if (t.IsCanceled)
                     {
                         TaskCompletionSource.TrySetCanceled();
                     }
-                    else if (task.IsFaulted && task.Exception?.InnerExceptions.Count > 0)
+                    else if (t.IsFaulted && t.Exception?.InnerExceptions.Count > 0)
                     {
-                        foreach (var exception in task.Exception.InnerExceptions)
-                            OnError?.Invoke(exception);
-                        
-                        TaskCompletionSource.TrySetException(task.Exception.InnerExceptions[0]);
+                        if (t.Exception?.InnerExceptions.Count > 0)
+                        {
+                            foreach (var exception in t.Exception.InnerExceptions)
+                            {
+                                if (OnError is not null)
+                                    UnityMainThreadDispatcher.Enqueue(() => OnError(exception));
+                            }
+                            _exception = t.Exception.InnerExceptions[0];
+                        }
+                        else
+                        {
+                            _exception = t.Exception;
+                            UnityMainThreadDispatcher.Enqueue(() => OnError(_exception));
+                        }
+
+                        TaskCompletionSource.TrySetException(_exception ?? new Exception());
+                        _isFail = true;
                     }
-                    else if (task.IsCompletedSuccessfully)
+                    else if (t.IsCompletedSuccessfully || t.IsCompleted)
                     {
-                        OnSuccess?.Invoke();
+                        if (OnSuccess is not null)
+                            UnityMainThreadDispatcher.Enqueue(OnSuccess);
+                        
                         if (OnSuccessTask is not null)
                         {
                             var successTasks = OnSuccessTask();
@@ -109,16 +148,17 @@ namespace AceLand.TaskUtils.PromiseAwaiter
                         }
                         
                         TaskCompletionSource.TrySetResult(true);
+                        _isSuccess = true;
                     }
 
                     IsCompleted = true;
-                    OnFinal?.Invoke();
-                    Continuation?.Invoke();
+                    if (OnFinal is not null)
+                        UnityMainThreadDispatcher.Enqueue(OnFinal);
+                    if (Continuation is not null)
+                        UnityMainThreadDispatcher.Enqueue(Continuation);
                     linkedTokenSource?.Dispose();
                 },
-                linkedToken,
-                TaskCreationOptions.LongRunning,
-                TaskScheduler.Default
+                cancellationToken: linkedToken
             );
         }
 
