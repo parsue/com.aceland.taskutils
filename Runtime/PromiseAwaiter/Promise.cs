@@ -45,14 +45,11 @@ namespace AceLand.TaskUtils.PromiseAwaiter
         
         private CancellationTokenSource _tokenSource;
 
-        private bool _isSuccess;
-        private bool _isFail;
-        private Exception _exception;
-
         public Promise Then(Action onSuccess)
         {
-            if (Disposed) return this;
-            if (_isSuccess)
+            if (Disposed || IsCanceled) return this;
+            
+            if (IsSuccess)
             {
                 onSuccess?.Invoke();
                 return this;
@@ -64,9 +61,9 @@ namespace AceLand.TaskUtils.PromiseAwaiter
         
         public Promise Then(Func<Task> onSuccess)
         {
-            if (Disposed || IsCompleted) return this;
-            if (Disposed) return this;
-            if (_isSuccess)
+            if (Disposed || IsCanceled) return this;
+            
+            if (IsSuccess)
             {
                 onSuccess?.Invoke();
                 return this;
@@ -78,10 +75,11 @@ namespace AceLand.TaskUtils.PromiseAwaiter
         
         public Promise Catch(Action<Exception> onError)
         {
-            if (Disposed) return this;
-            if (_isFail)
+            if (Disposed || IsCanceled) return this;
+            
+            if (IsFault)
             {
-                onError?.Invoke(_exception);
+                onError?.Invoke(Exception);
                 return this;
             }
 
@@ -91,7 +89,8 @@ namespace AceLand.TaskUtils.PromiseAwaiter
         
         public Promise Final(Action onFinal)
         {
-            if (Disposed) return this;
+            if (Disposed || IsCanceled) return this;
+
             if (IsCompleted)
             {
                 onFinal?.Invoke();
@@ -112,7 +111,7 @@ namespace AceLand.TaskUtils.PromiseAwaiter
                 {
                     if (t.IsCanceled)
                     {
-                        TaskCompletionSource.TrySetCanceled();
+                        Cancel();
                     }
                     else if (t.IsFaulted && t.Exception?.InnerExceptions.Count > 0)
                     {
@@ -123,19 +122,20 @@ namespace AceLand.TaskUtils.PromiseAwaiter
                                 if (OnError is not null)
                                     UnityMainThreadDispatcher.Enqueue(() => OnError(exception));
                             }
-                            _exception = t.Exception.InnerExceptions[0];
+                            Exception = t.Exception.InnerExceptions[0];
                         }
                         else
                         {
-                            _exception = t.Exception;
-                            UnityMainThreadDispatcher.Enqueue(() => OnError(_exception));
+                            Exception = t.Exception;
+                            UnityMainThreadDispatcher.Enqueue(() => OnError(Exception));
                         }
 
-                        TaskCompletionSource.TrySetException(_exception ?? new Exception());
-                        _isFail = true;
+                        Fault();
                     }
                     else if (t.IsCompletedSuccessfully || t.IsCompleted)
                     {
+                        Result = true;
+                        
                         if (OnSuccess is not null)
                             UnityMainThreadDispatcher.Enqueue(OnSuccess);
                         
@@ -147,15 +147,19 @@ namespace AceLand.TaskUtils.PromiseAwaiter
                                 Thread.Yield();
                         }
                         
-                        TaskCompletionSource.TrySetResult(true);
-                        _isSuccess = true;
+                        Success();
                     }
 
                     IsCompleted = true;
-                    if (OnFinal is not null)
-                        UnityMainThreadDispatcher.Enqueue(OnFinal);
-                    if (Continuation is not null)
-                        UnityMainThreadDispatcher.Enqueue(Continuation);
+                    
+                    if (!IsCanceled)
+                    {
+                        if (OnFinal is not null)
+                            UnityMainThreadDispatcher.Enqueue(OnFinal);
+                        if (Continuation is not null)
+                            UnityMainThreadDispatcher.Enqueue(Continuation);
+                    }
+                    
                     linkedTokenSource?.Dispose();
                 },
                 cancellationToken: linkedToken

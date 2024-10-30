@@ -15,6 +15,10 @@ namespace AceLand.TaskUtils.PromiseAwaiter.Core
         public virtual T GetResult() => Result;
         
         public virtual bool IsCompleted { get; protected set; }
+        public virtual bool IsSuccess { get; protected set; }
+        public virtual bool IsFault { get; protected set; }
+        public virtual bool IsCanceled { get; protected set; }
+        public virtual Exception Exception { get; protected set; }
         public virtual T Result { get; protected set; }
 
         private protected readonly TaskCompletionSource<T> TaskCompletionSource;
@@ -25,8 +29,22 @@ namespace AceLand.TaskUtils.PromiseAwaiter.Core
             Cancel();
         }
 
+        protected virtual void Success()
+        {
+            IsSuccess = true;
+            TaskCompletionSource?.TrySetResult(Result);
+        }
+
+        protected virtual void Fault()
+        {
+            IsFault = true;
+            TaskCompletionSource?.TrySetException(Exception);
+        }
+
         public virtual void Cancel()
         {
+            IsCanceled = true;
+            TaskCompletionSource?.TrySetCanceled();
             Continuation = null;
         }
         
