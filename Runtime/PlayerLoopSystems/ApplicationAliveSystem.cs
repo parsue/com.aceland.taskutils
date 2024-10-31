@@ -9,7 +9,7 @@ namespace AceLand.TaskUtils.PlayerLoopSystems
     internal class ApplicationAliveSystem : IPlayerLoopSystem
     {
         internal ApplicationAliveSystem() => SystemStart();
-        internal static CancellationTokenSource applicationAliveTokenSource;
+        internal static CancellationTokenSource ApplicationAliveTokenSource;
         internal static event Action OnApplicationQuit;
 
         private PlayerLoopSystem _system;
@@ -17,7 +17,7 @@ namespace AceLand.TaskUtils.PlayerLoopSystems
         private void SystemStart()
         {
             Debug.Log("Application Alive System Start");
-            applicationAliveTokenSource = new CancellationTokenSource();
+            ApplicationAliveTokenSource = new CancellationTokenSource();
             _system = this.CreatePlayerLoopSystem();
             _system.InsertSystem(PlayerLoopType.TimeUpdate, 0);
         }
@@ -38,8 +38,8 @@ namespace AceLand.TaskUtils.PlayerLoopSystems
         private void OnApplicationEnd()
         {
             SystemStop();
-            applicationAliveTokenSource?.Cancel();
-            applicationAliveTokenSource?.Dispose();
+            ApplicationAliveTokenSource?.Cancel();
+            ApplicationAliveTokenSource?.Dispose();
             OnApplicationQuit?.Invoke();
             Debug.Log("Application End");
         }

@@ -7,7 +7,7 @@ namespace AceLand.TaskUtils
     public static class TaskHelper
     {
         public static CancellationToken ApplicationAliveToken => 
-            ApplicationAliveSystem.applicationAliveTokenSource.Token;
+            ApplicationAliveSystem.ApplicationAliveTokenSource.Token;
 
         public static CancellationToken LinkedOrApplicationAliveToken(CancellationTokenSource tokenSource,
             out CancellationTokenSource linkedTokenSource)

@@ -8,7 +8,7 @@ namespace AceLand.TaskUtils.PlayerLoopSystems
 {
     internal class UnityMainThreadDispatcher : IPlayerLoopSystem
     {
-        private static readonly Queue<Action> _executionQueue = new();
+        private static readonly Queue<Action> ExecutionQueue = new();
         
         internal UnityMainThreadDispatcher() => SystemStart();
 
@@ -18,40 +18,40 @@ namespace AceLand.TaskUtils.PlayerLoopSystems
         {
             Debug.Log("Unity MainThread Dispatcher Start");
             _system = this.CreatePlayerLoopSystem();
-            _system.InsertSystem(PlayerLoopType.EarlyUpdate, 0);
+            _system.InsertSystem(PlayerLoopType.Initialization);
             TaskHelper.AddApplicationQuitListener(SystemStop);
         }
 
         private void SystemStop()
         {
             Debug.Log("Unity MainThread Dispatcher Stop");
-            _system.RemoveSystem(PlayerLoopType.EarlyUpdate);
+            _system.RemoveSystem(PlayerLoopType.Initialization);
         }
         
         public void SystemUpdate()
         {
-            lock (_executionQueue)
+            lock (ExecutionQueue)
             {
-                while (_executionQueue.Count > 0)
+                while (ExecutionQueue.Count > 0)
                 {
-                    _executionQueue.Dequeue()?.Invoke();
+                    ExecutionQueue.Dequeue()?.Invoke();
                 }
             }
         }
 
         internal static void Enqueue(Action action)
         {
-            lock (_executionQueue)
+            lock (ExecutionQueue)
             {
-                _executionQueue.Enqueue(action);
+                ExecutionQueue.Enqueue(action);
             }
         }
 
         internal void Enqueue<T>(Action<T> action, T arg)
         {
-            lock (_executionQueue)
+            lock (ExecutionQueue)
             {
-                _executionQueue.Enqueue(() => action(arg));
+                ExecutionQueue.Enqueue(() => action(arg));
             }
         }
     }

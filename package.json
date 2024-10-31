@@ -14,7 +14,8 @@
     "utils"
   ],
   "dependencies": {
-    "com.aceland.library": "1.0.0"
+    "com.aceland.library": "1.0.0",
+    "com.aceland.playerloophack": "1.0.0"
   },
   "documentationUrl": ""
 }
