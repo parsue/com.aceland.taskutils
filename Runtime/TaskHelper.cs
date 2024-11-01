@@ -25,6 +25,8 @@ namespace AceLand.TaskUtils
             return linkedTokenSource.Token;
         }
 
+        public static void EnqueueToDispatcher(Action action) =>
+            UnityMainThreadDispatcher.Enqueue(action);
         public static void AddApplicationQuitListener(Action listener) => 
             ApplicationAliveSystem.OnApplicationQuit += listener;
         public static void RemoveApplicationQuitListener(Action listener) => 
