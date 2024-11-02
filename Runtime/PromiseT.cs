@@ -1,17 +1,16 @@
 using System;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using AceLand.TaskUtils.Core;
 using AceLand.TaskUtils.PlayerLoopSystems;
-using AceLand.TaskUtils.PromiseAwaiter.Core;
 
-namespace AceLand.TaskUtils.PromiseAwaiter
+namespace AceLand.TaskUtils
 {
-    public sealed class Promise : Awaiter<bool>
+    public sealed class Promise<T> : Awaiter<T>
     {
-        internal Promise(Task task,
-            Action thenAction = null, Func<Task> thenTask = null,
-            Action<Exception> catchAction = null,
+        internal Promise(Task<T> task, 
+            Action<T> thenAction = null, Func<T, Task> thenTask = null,
+            Action<Exception> catchAction = null, 
             Action finalAction = null)
         {
             if (thenAction is not null) Then(thenAction);
@@ -37,74 +36,74 @@ namespace AceLand.TaskUtils.PromiseAwaiter
             _tokenSource?.Cancel();
             _tokenSource?.Dispose();
         }
-        
-        private Action OnSuccess { get; set; }
-        private Func<Task> OnSuccessTask { get; set; }
+
+        private Action<T> OnSuccess { get; set; }
+        private Func<T, Task> OnSuccessTask { get; set; }
         private Action<Exception> OnError { get; set; }
         private Action OnFinal { get; set; }
         
         private CancellationTokenSource _tokenSource;
 
-        public Promise Then(Action onSuccess)
+        public Promise<T> Then(Action<T> onSuccess)
         {
-            if (Disposed || IsCanceled) return this;
+            if (IsCanceled || Disposed) return this;
             
             if (IsSuccess)
             {
-                onSuccess?.Invoke();
+                onSuccess?.Invoke(Result);
                 return this;
             }
-
+            
             OnSuccess += onSuccess;
             return this;
         }
         
-        public Promise Then(Func<Task> onSuccess)
+        public Promise<T> Then(Func<T, Task> onSuccess)
         {
-            if (Disposed || IsCanceled) return this;
+            if (IsCanceled || Disposed) return this;
             
             if (IsSuccess)
             {
-                onSuccess?.Invoke();
+                onSuccess?.Invoke(Result);
                 return this;
             }
-
+            
             OnSuccessTask += onSuccess;
             return this;
         }
         
-        public Promise Catch(Action<Exception> onError)
+        public Promise<T> Catch(Action<Exception> onError)
         {
-            if (Disposed || IsCanceled) return this;
+            if (IsCanceled || Disposed) return this;
             
             if (IsFault)
             {
                 onError?.Invoke(Exception);
                 return this;
             }
-
+            
             OnError += onError;
             return this;
         }
         
-        public Promise Final(Action onFinal)
+        public Promise<T> Final(Action onFinal)
         {
-            if (Disposed || IsCanceled) return this;
-
+            if (IsCanceled || Disposed) return this;
+            
             if (IsCompleted)
             {
                 onFinal?.Invoke();
                 return this;
             }
-
+            
             OnFinal += onFinal;
             return this;
         }
 
-        private void HandleTask(Task task)
+        private void HandleTask(Task<T> task)
         {
             _tokenSource = new CancellationTokenSource();
-            var linkedToken = TaskHelper.LinkedOrApplicationAliveToken(_tokenSource,
+            var linkedToken = Promise.LinkedOrApplicationAliveToken(_tokenSource,
                 out var linkedTokenSource);
 
             task.ContinueWith(t =>
@@ -113,7 +112,7 @@ namespace AceLand.TaskUtils.PromiseAwaiter
                     {
                         Cancel();
                     }
-                    else if (t.IsFaulted && t.Exception?.InnerExceptions.Count > 0)
+                    else if (t.IsFaulted)
                     {
                         if (t.Exception?.InnerExceptions.Count > 0)
                         {
@@ -122,31 +121,32 @@ namespace AceLand.TaskUtils.PromiseAwaiter
                                 if (OnError is not null)
                                     UnityMainThreadDispatcher.Enqueue(() => OnError(exception));
                             }
-                            Exception = t.Exception.InnerExceptions[0];
+
+                            Exception = t.Exception.InnerExceptions[0]; 
                         }
                         else
                         {
-                            Exception = t.Exception;
-                            UnityMainThreadDispatcher.Enqueue(() => OnError(Exception));
+                            Exception = t.Exception; 
+                            UnityMainThreadDispatcher.Enqueue(() => OnError(t.Exception));
                         }
-
+                        
                         Fault();
                     }
                     else if (t.IsCompletedSuccessfully || t.IsCompleted)
                     {
-                        Result = true;
-                        
+                        Result = t.Result;
+
                         if (OnSuccess is not null)
-                            UnityMainThreadDispatcher.Enqueue(OnSuccess);
+                            UnityMainThreadDispatcher.Enqueue(() => OnSuccess(Result));
                         
                         if (OnSuccessTask is not null)
                         {
-                            var successTasks = OnSuccessTask();
-                            
+                            var successTasks = OnSuccessTask(Result);
+
                             while (!linkedToken.IsCancellationRequested && !successTasks.IsCompleted)
                                 Thread.Yield();
                         }
-                        
+
                         Success();
                     }
 
@@ -166,13 +166,9 @@ namespace AceLand.TaskUtils.PromiseAwaiter
             );
         }
 
-        public static Promise WhenAll(Promise[] promises) =>
-            Task.WhenAll(promises.Select(promise => promise.AsTask()).ToArray());
-        public static Promise<T[]> WhenAll<T>(Promise<T>[] promises) =>
-            Task.WhenAll(promises.Select(p => p.AsTask()).ToArray());
-
-        internal Task AsTask() => TaskCompletionSource.Task;
-        public static implicit operator Promise(Task task) => new(task);
-        public static implicit operator Task(Promise promise) => promise.AsTask();
+        internal Task<T> AsTask() => TaskCompletionSource.Task;
+        public static implicit operator Promise(Promise<T> promise) => promise.AsTask();
+        public static implicit operator Promise<T>(Task<T> task) => new(task);
+        public static implicit operator Task<T>(Promise<T> promise) => promise.AsTask();
     }
 }

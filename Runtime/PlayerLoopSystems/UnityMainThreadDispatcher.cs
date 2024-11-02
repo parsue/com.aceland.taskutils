@@ -19,7 +19,7 @@ namespace AceLand.TaskUtils.PlayerLoopSystems
             Debug.Log("Unity MainThread Dispatcher Start");
             _system = this.CreatePlayerLoopSystem();
             _system.InsertSystem(PlayerLoopType.Initialization);
-            TaskHelper.AddApplicationQuitListener(SystemStop);
+            Promise.AddApplicationQuitListener(SystemStop);
         }
 
         private void SystemStop()

@@ -1,10 +1,14 @@
 using System;
 using System.Threading.Tasks;
+using AceLand.TaskUtils.PlayerLoopSystems;
 
-namespace AceLand.TaskUtils.PromiseAwaiter
+namespace AceLand.TaskUtils
 {
     public static class PromiseExtensions
     {
+        public static void EnqueueToDispatcher(this Action action) =>
+            UnityMainThreadDispatcher.Enqueue(action);
+        
         public static Promise<T> Then<T>(this Task<T> task, Action<T> onSuccess) =>
             new(task, thenAction: onSuccess);
         public static Promise<T> Then<T>(this Task<T> task, Func<T, Task> onSuccess) =>

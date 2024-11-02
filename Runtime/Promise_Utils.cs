@@ -1,10 +1,10 @@
-using System;
+﻿using System;
 using System.Threading;
 using AceLand.TaskUtils.PlayerLoopSystems;
 
 namespace AceLand.TaskUtils
 {
-    public static class TaskHelper
+    public sealed partial class Promise
     {
         public static CancellationToken ApplicationAliveToken => 
             ApplicationAliveSystem.ApplicationAliveTokenSource.Token;

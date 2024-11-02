@@ -3,7 +3,7 @@ using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using AceLand.Library.Disposable;
 
-namespace AceLand.TaskUtils.PromiseAwaiter.Core
+namespace AceLand.TaskUtils.Core
 {
     public abstract class Awaiter<T> : DisposableObject, INotifyCompletion
     {
