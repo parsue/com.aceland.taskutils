@@ -113,7 +113,7 @@ namespace AceLand.TaskUtils
                     {
                         Cancel();
                     }
-                    else if (t.IsFaulted && t.Exception?.InnerExceptions.Count > 0)
+                    else if (t.IsFaulted)
                     {
                         OnException(t);
                         Fault();
@@ -121,9 +121,6 @@ namespace AceLand.TaskUtils
                     else if (t.IsCompletedSuccessfully || t.IsCompleted)
                     {
                         Result = true;
-                        
-                        if (OnSuccess is not null)
-                            UnityMainThreadDispatcher.Enqueue(OnSuccess);
                         
                         if (OnSuccessTask is not null)
                         {
@@ -138,21 +135,17 @@ namespace AceLand.TaskUtils
                                 Fault();
                             }
                         }
-                        
-                        if (!IsFault) Success();
+
+                        if (!IsFault)
+                        {
+                            if (OnSuccess is not null)
+                                UnityMainThreadDispatcher.Enqueue(OnSuccess);
+                            
+                            Success();
+                        }
                     }
 
-                    IsCompleted = true;
-                    
-                    if (!IsCanceled)
-                    {
-                        if (OnFinal is not null)
-                            UnityMainThreadDispatcher.Enqueue(OnFinal);
-                        if (Continuation is not null)
-                            UnityMainThreadDispatcher.Enqueue(Continuation);
-                    }
-                    
-                    linkedTokenSource?.Dispose();
+                    OnFinalize(linkedTokenSource);
                 },
                 cancellationToken: linkedToken
             );
@@ -171,9 +164,21 @@ namespace AceLand.TaskUtils
             }
             else
             {
-                Exception = t.Exception;
+                Exception = t.Exception ?? new Exception("unknown exception");
                 UnityMainThreadDispatcher.Enqueue(() => OnError(Exception));
             }
+        }
+
+        private void OnFinalize(CancellationTokenSource linkedTokenSource)
+        {
+            IsCompleted = true;
+
+            if (IsCanceled) return;
+            
+            if (OnFinal is not null)
+                UnityMainThreadDispatcher.Enqueue(OnFinal);
+            if (Continuation is not null)
+                UnityMainThreadDispatcher.Enqueue(Continuation);
         }
 
         public static Promise WhenAll(Promise[] promises) =>

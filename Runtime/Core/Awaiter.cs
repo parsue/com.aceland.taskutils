@@ -32,19 +32,19 @@ namespace AceLand.TaskUtils.Core
         protected virtual void Success()
         {
             IsSuccess = true;
-            TaskCompletionSource?.TrySetResult(Result);
+            TaskCompletionSource?.SetResult(Result);
         }
 
         protected virtual void Fault()
         {
             IsFault = true;
-            TaskCompletionSource?.TrySetException(Exception);
+            TaskCompletionSource?.SetException(Exception);
         }
 
         public virtual void Cancel()
         {
             IsCanceled = true;
-            TaskCompletionSource?.TrySetCanceled();
+            TaskCompletionSource?.SetCanceled();
             Continuation = null;
         }
         
