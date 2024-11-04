@@ -115,7 +115,21 @@ namespace AceLand.TaskUtils
                     }
                     else if (t.IsFaulted && t.Exception?.InnerExceptions.Count > 0)
                     {
-                        OnException(t);
+                        if (t.Exception?.InnerExceptions.Count > 0)
+                        {
+                            foreach (var exception in t.Exception.InnerExceptions)
+                            {
+                                if (OnError is not null)
+                                    UnityMainThreadDispatcher.Enqueue(() => OnError(exception));
+                            }
+                            Exception = t.Exception.InnerExceptions[0];
+                        }
+                        else
+                        {
+                            Exception = t.Exception;
+                            UnityMainThreadDispatcher.Enqueue(() => OnError(Exception));
+                        }
+
                         Fault();
                     }
                     else if (t.IsCompletedSuccessfully || t.IsCompleted)
@@ -131,12 +145,6 @@ namespace AceLand.TaskUtils
                             
                             while (!linkedToken.IsCancellationRequested && !successTasks.IsCompleted)
                                 Thread.Yield();
-                            
-                            if (successTasks.IsFaulted && successTasks.Exception?.InnerExceptions.Count > 0)
-                            {
-                                OnException(successTasks);
-                                Fault();
-                            }
                         }
                         
                         Success();
@@ -156,24 +164,6 @@ namespace AceLand.TaskUtils
                 },
                 cancellationToken: linkedToken
             );
-        }
-
-        private void OnException(Task t)
-        {
-            if (t.Exception?.InnerExceptions.Count > 0)
-            {
-                foreach (var exception in t.Exception.InnerExceptions)
-                {
-                    if (OnError is not null)
-                        UnityMainThreadDispatcher.Enqueue(() => OnError(exception));
-                }
-                Exception = t.Exception.InnerExceptions[0];
-            }
-            else
-            {
-                Exception = t.Exception;
-                UnityMainThreadDispatcher.Enqueue(() => OnError(Exception));
-            }
         }
 
         public static Promise WhenAll(Promise[] promises) =>
