@@ -114,22 +114,7 @@ namespace AceLand.TaskUtils
                     }
                     else if (t.IsFaulted)
                     {
-                        if (t.Exception?.InnerExceptions.Count > 0)
-                        {
-                            foreach (var exception in t.Exception.InnerExceptions)
-                            {
-                                if (OnError is not null)
-                                    UnityMainThreadDispatcher.Enqueue(() => OnError(exception));
-                            }
-
-                            Exception = t.Exception.InnerExceptions[0]; 
-                        }
-                        else
-                        {
-                            Exception = t.Exception; 
-                            UnityMainThreadDispatcher.Enqueue(() => OnError(t.Exception));
-                        }
-                        
+                        OnException(t);
                         Fault();
                     }
                     else if (t.IsCompletedSuccessfully || t.IsCompleted)
@@ -142,12 +127,18 @@ namespace AceLand.TaskUtils
                         if (OnSuccessTask is not null)
                         {
                             var successTasks = OnSuccessTask(Result);
-
+                            
                             while (!linkedToken.IsCancellationRequested && !successTasks.IsCompleted)
                                 Thread.Yield();
+                            
+                            if (successTasks.IsFaulted && successTasks.Exception?.InnerExceptions.Count > 0)
+                            {
+                                OnException(successTasks);
+                                Fault();
+                            }
                         }
-
-                        Success();
+                        
+                        if (!IsFault) Success();
                     }
 
                     IsCompleted = true;
@@ -164,6 +155,44 @@ namespace AceLand.TaskUtils
                 },
                 cancellationToken: linkedToken
             );
+        }
+        
+        private void OnException(Task t)
+        {
+            if (t.Exception?.InnerExceptions.Count > 0)
+            {
+                foreach (var exception in t.Exception.InnerExceptions)
+                {
+                    if (OnError is not null)
+                        UnityMainThreadDispatcher.Enqueue(() => OnError(exception));
+                }
+
+                Exception = t.Exception.InnerExceptions[0]; 
+            }
+            else
+            {
+                Exception = t.Exception; 
+                UnityMainThreadDispatcher.Enqueue(() => OnError(t.Exception));
+            }
+        }
+
+        private void OnException(Task<T> t)
+        {
+            if (t.Exception?.InnerExceptions.Count > 0)
+            {
+                foreach (var exception in t.Exception.InnerExceptions)
+                {
+                    if (OnError is not null)
+                        UnityMainThreadDispatcher.Enqueue(() => OnError(exception));
+                }
+
+                Exception = t.Exception.InnerExceptions[0]; 
+            }
+            else
+            {
+                Exception = t.Exception; 
+                UnityMainThreadDispatcher.Enqueue(() => OnError(t.Exception));
+            }
         }
 
         internal Task<T> AsTask() => TaskCompletionSource.Task;

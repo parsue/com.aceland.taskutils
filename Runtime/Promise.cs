@@ -139,7 +139,7 @@ namespace AceLand.TaskUtils
                             }
                         }
                         
-                        Success();
+                        if (!IsFault) Success();
                     }
 
                     IsCompleted = true;
