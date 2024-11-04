@@ -1,6 +1,6 @@
 {
   "name": "com.aceland.taskutils",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "unity": "2022.3",
   "displayName": "AceLand Task Utils",
   "description": "AceLand Task Utils is a c# Task implement package.",
@@ -19,7 +19,7 @@
     "utils"
   ],
   "dependencies": {
-    "com.aceland.library": "1.0.0",
+    "com.aceland.library": "1.0.1",
     "com.aceland.playerloophack": "1.0.0"
   },
   "publishConfig": {
