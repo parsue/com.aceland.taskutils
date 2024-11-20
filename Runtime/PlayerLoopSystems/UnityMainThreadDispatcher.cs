@@ -18,14 +18,14 @@ namespace AceLand.TaskUtils.PlayerLoopSystems
         {
             Debug.Log("Unity MainThread Dispatcher Start");
             _system = this.CreatePlayerLoopSystem();
-            _system.InsertSystem(PlayerLoopType.Initialization);
+            _system.InjectSystem(PlayerLoopState.Initialization);
             Promise.AddApplicationQuitListener(SystemStop);
         }
 
         private void SystemStop()
         {
             Debug.Log("Unity MainThread Dispatcher Stop");
-            _system.RemoveSystem(PlayerLoopType.Initialization);
+            _system.RemoveSystem(PlayerLoopState.Initialization);
         }
         
         public void SystemUpdate()

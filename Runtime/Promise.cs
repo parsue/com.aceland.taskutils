@@ -33,7 +33,6 @@ namespace AceLand.TaskUtils
             OnSuccess = null;
             OnSuccessTask = null;
             OnError = null;
-            OnFinal = null;
             _tokenSource?.Cancel();
             _tokenSource?.Dispose();
         }
@@ -89,7 +88,7 @@ namespace AceLand.TaskUtils
         
         public Promise Final(Action onFinal)
         {
-            if (Disposed || IsCanceled) return this;
+            if (Disposed) return this;
 
             if (IsCompleted)
             {
@@ -173,7 +172,7 @@ namespace AceLand.TaskUtils
         {
             IsCompleted = true;
 
-            if (IsCanceled) return;
+            if (Disposed) return;
             
             if (OnFinal is not null)
                 UnityMainThreadDispatcher.Enqueue(OnFinal);

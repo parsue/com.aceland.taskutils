@@ -1,6 +1,6 @@
 {
   "name": "com.aceland.taskutils",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "unity": "2022.3",
   "displayName": "AceLand Task Utils",
   "description": "AceLand Task Utils is a c# Task implement package.",
@@ -19,8 +19,8 @@
     "utils"
   ],
   "dependencies": {
-    "com.aceland.library": "1.0.1",
-    "com.aceland.playerloophack": "1.0.1"
+    "com.aceland.library": "1.0.2",
+    "com.aceland.playerloophack": "1.0.2"
   },
   "publishConfig": {
     "registry": "https://package.openupm.com"

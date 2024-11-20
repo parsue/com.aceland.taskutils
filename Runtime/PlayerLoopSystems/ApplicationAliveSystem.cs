@@ -19,13 +19,13 @@ namespace AceLand.TaskUtils.PlayerLoopSystems
             Debug.Log("Application Alive System Start");
             ApplicationAliveTokenSource = new CancellationTokenSource();
             _system = this.CreatePlayerLoopSystem();
-            _system.InsertSystem(PlayerLoopType.TimeUpdate, 0);
+            _system.InjectSystem(PlayerLoopState.TimeUpdate, 0);
         }
 
         private void SystemStop()
         {
             Debug.Log("Application Alive System Stop");
-            _system.RemoveSystem(PlayerLoopType.TimeUpdate);
+            _system.RemoveSystem(PlayerLoopState.TimeUpdate);
         }
         
         public void SystemUpdate()

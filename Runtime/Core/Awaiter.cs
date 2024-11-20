@@ -45,7 +45,6 @@ namespace AceLand.TaskUtils.Core
         {
             IsCanceled = true;
             TaskCompletionSource?.SetCanceled();
-            Continuation = null;
         }
         
         public virtual void OnCompleted(Action continuation)
