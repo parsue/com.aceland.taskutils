@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -183,6 +184,11 @@ namespace AceLand.TaskUtils
         public static Promise WhenAll(Promise[] promises) =>
             Task.WhenAll(promises.Select(promise => promise.AsTask()).ToArray());
         public static Promise<T[]> WhenAll<T>(Promise<T>[] promises) =>
+            Task.WhenAll(promises.Select(p => p.AsTask()).ToArray());
+
+        public static Promise WhenAll(List<Promise> promises) =>
+            Task.WhenAll(promises.Select(promise => promise.AsTask()).ToArray());
+        public static Promise<T[]> WhenAll<T>(List<Promise<T>> promises) =>
             Task.WhenAll(promises.Select(p => p.AsTask()).ToArray());
 
         internal Task AsTask() => TaskCompletionSource.Task;
