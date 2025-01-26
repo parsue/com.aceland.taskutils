@@ -191,6 +191,11 @@ namespace AceLand.TaskUtils
         public static Promise<T[]> WhenAll<T>(List<Promise<T>> promises) =>
             Task.WhenAll(promises.Select(p => p.AsTask()).ToArray());
 
+        public static Task SafeRun(Action action) =>
+            Task.Run(action);
+        public static Task SafeRun(Func<Task> action) =>
+            Task.Run(async () => await action.Invoke());
+
         internal Task AsTask() => TaskCompletionSource.Task;
         public static implicit operator Promise(Task task) => new(task);
         public static implicit operator Task(Promise promise) => promise.AsTask();
