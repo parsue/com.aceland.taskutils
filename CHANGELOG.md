@@ -6,7 +6,12 @@ All notable changes to this project will be documented in this file.
 
 ---
 
-## [1.0.5] - 2025-1-25
+## [1.0.6] - 2025-02-04
+
+### Fixed
+- SafeRun without token issue
+
+## [1.0.5] - 2025-01-25
 
 ### Add
 - SafeRun Task for Coroutine:
