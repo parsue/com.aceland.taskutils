@@ -192,9 +192,9 @@ namespace AceLand.TaskUtils
             Task.WhenAll(promises.Select(p => p.AsTask()).ToArray());
 
         public static Task SafeRun(Action action) =>
-            Task.Run(action);
+            Task.Run(action, ApplicationAliveToken);
         public static Task SafeRun(Func<Task> action) =>
-            Task.Run(async () => await action.Invoke());
+            Task.Run(async () => await action.Invoke(), ApplicationAliveToken);
 
         internal Task AsTask() => TaskCompletionSource.Task;
         public static implicit operator Promise(Task task) => new(task);
