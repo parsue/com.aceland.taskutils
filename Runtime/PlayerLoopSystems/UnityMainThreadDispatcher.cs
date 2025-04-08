@@ -8,7 +8,7 @@ namespace AceLand.TaskUtils.PlayerLoopSystems
 {
     internal class UnityMainThreadDispatcher : IPlayerLoopSystem
     {
-        private static readonly Queue<Action> ExecutionQueue = new();
+        private static readonly Queue<Action> executionQueue = new();
         
         internal UnityMainThreadDispatcher() => SystemStart();
 
@@ -30,28 +30,26 @@ namespace AceLand.TaskUtils.PlayerLoopSystems
         
         public void SystemUpdate()
         {
-            lock (ExecutionQueue)
+            lock (executionQueue)
             {
-                while (ExecutionQueue.Count > 0)
-                {
-                    ExecutionQueue.Dequeue()?.Invoke();
-                }
+                while (executionQueue.Count > 0)
+                    executionQueue.Dequeue()?.Invoke();
             }
         }
 
         internal static void Enqueue(Action action)
         {
-            lock (ExecutionQueue)
+            lock (executionQueue)
             {
-                ExecutionQueue.Enqueue(action);
+                executionQueue.Enqueue(action);
             }
         }
 
         internal void Enqueue<T>(Action<T> action, T arg)
         {
-            lock (ExecutionQueue)
+            lock (executionQueue)
             {
-                ExecutionQueue.Enqueue(() => action(arg));
+                executionQueue.Enqueue(() => action(arg));
             }
         }
     }
