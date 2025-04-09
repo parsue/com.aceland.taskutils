@@ -6,6 +6,12 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [1.0.8] - 2025-04-09
+### Fixed
+- [Singleton] PromiseAgent - not handle AsTask on Agent not yet Ready 
+### Removed
+- [Extension] IEnumerator<T>/IEnumerable/IENumerable<T> .AsTask()
+
 ## [1.0.7] - 2025-04-08
 ### Added
 - [Extension] IEnumerator.AsTask()

@@ -1,6 +1,5 @@
 using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using AceLand.TaskUtils.Mono;
 using AceLand.TaskUtils.PlayerLoopSystems;
@@ -14,15 +13,6 @@ namespace AceLand.TaskUtils
         
         public static Task AsTask(this IEnumerator enumerator) =>
             PromiseAgent.RunCoroutine(enumerator);
-        
-        public static Task AsTask<T>(this IEnumerator<T> enumerator) =>
-            PromiseAgent.RunCoroutine(enumerator);
-
-        public static Task AsTask(this IEnumerable enumerable) =>
-            AsTask(enumerable.GetEnumerator());
-
-        public static Task AsTask<T>(this IEnumerable<T> enumerable) =>
-            AsTask(enumerable.GetEnumerator());
         
         public static Promise<T> Then<T>(this Task<T> task, Action<T> onSuccess) =>
             new(task, thenAction: onSuccess);

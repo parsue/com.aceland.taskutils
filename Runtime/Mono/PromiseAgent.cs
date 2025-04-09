@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using AceLand.Library.Mono;
 using UnityEngine;
@@ -15,6 +14,7 @@ namespace AceLand.TaskUtils.Mono
         private void OnEnable()
         {
             Ready = true;
+            Destroyed = false;
         }
 
         private void OnDisable()
@@ -50,17 +50,7 @@ namespace AceLand.TaskUtils.Mono
                 throw new UnityException("Promise Agent Destroyed");
 
             var tcs = new TaskCompletionSource<object>();
-            Instance.StartCoroutine(RunCoroutine(enumerator, tcs));
-            return tcs.Task;
-        }
-
-        internal static Task<T> RunCoroutine<T>(IEnumerator<T> enumerator)
-        {
-            if (Destroyed)
-                throw new UnityException("Promise Agent Destroyed");
-
-            var tcs = new TaskCompletionSource<T>();
-            Instance.StartCoroutine(RunCoroutine(enumerator, tcs));
+            CoroutineAgent(RunCoroutine(enumerator, tcs));
             return tcs.Task;
         }
         
@@ -73,27 +63,6 @@ namespace AceLand.TaskUtils.Mono
                     if (!enumerator.MoveNext())
                     {
                         tcs.TrySetResult(null);
-                        yield break;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    tcs.TrySetException(ex);
-                    yield break;
-                }
-                yield return enumerator.Current;
-            }
-        }
-        
-        private static IEnumerator RunCoroutine<T>(IEnumerator<T> enumerator, TaskCompletionSource<T> tcs)
-        {
-            while (true)
-            {
-                try
-                {
-                    if (!enumerator.MoveNext())
-                    {
-                        tcs.TrySetResult(default);
                         yield break;
                     }
                 }
