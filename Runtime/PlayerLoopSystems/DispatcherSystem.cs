@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using AceLand.PlayerLoopHack;
 using UnityEngine;
@@ -6,26 +6,27 @@ using UnityEngine.LowLevel;
 
 namespace AceLand.TaskUtils.PlayerLoopSystems
 {
-    internal class UnityMainThreadDispatcher : IPlayerLoopSystem
+    internal class DispatcherSystem : IPlayerLoopSystem
     {
-        private static readonly Queue<Action> executionQueue = new();
+        internal DispatcherSystem(PlayerLoopState state) => SystemStart(state);
         
-        internal UnityMainThreadDispatcher() => SystemStart();
-
+        private static readonly Queue<Action> executionQueue = new();
+        private PlayerLoopState currentPlayerLoopState;
         private PlayerLoopSystem _system;
         
-        private void SystemStart()
+        private void SystemStart(PlayerLoopState state)
         {
-            Debug.Log("Unity MainThread Dispatcher Start");
+            currentPlayerLoopState = state;
             _system = this.CreatePlayerLoopSystem();
-            _system.InjectSystem(PlayerLoopState.Initialization);
+            _system.InjectSystem(state, 0);
             Promise.AddApplicationQuitListener(SystemStop);
+            Debug.Log($"Dispatcher {state} Start");
         }
 
-        private void SystemStop()
+        internal void SystemStop()
         {
+            _system.RemoveSystem(currentPlayerLoopState);
             Debug.Log("Unity MainThread Dispatcher Stop");
-            _system.RemoveSystem(PlayerLoopState.Initialization);
         }
         
         public void SystemUpdate()
@@ -37,7 +38,7 @@ namespace AceLand.TaskUtils.PlayerLoopSystems
             }
         }
 
-        internal static void Enqueue(Action action)
+        internal void Enqueue(Action action)
         {
             lock (executionQueue)
             {

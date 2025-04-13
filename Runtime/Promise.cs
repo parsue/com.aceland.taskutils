@@ -138,9 +138,7 @@ namespace AceLand.TaskUtils
 
                         if (!IsFault)
                         {
-                            if (OnSuccess is not null)
-                                UnityMainThreadDispatcher.Enqueue(OnSuccess);
-                            
+                            OnSuccess?.EnqueueToDispatcher();
                             Success();
                         }
                     }
@@ -156,29 +154,23 @@ namespace AceLand.TaskUtils
             if (t.Exception?.InnerExceptions.Count > 0)
             {
                 foreach (var exception in t.Exception.InnerExceptions)
-                {
-                    if (OnError is not null)
-                        UnityMainThreadDispatcher.Enqueue(() => OnError(exception));
-                }
+                    OnError?.EnqueueToDispatcher(exception);
                 Exception = t.Exception.InnerExceptions[0];
             }
             else
             {
                 Exception = t.Exception ?? new Exception("unknown exception");
-                UnityMainThreadDispatcher.Enqueue(() => OnError(Exception));
+                OnError?.EnqueueToDispatcher(Exception);
             }
         }
 
         private void OnFinalize(CancellationTokenSource linkedTokenSource)
         {
             IsCompleted = true;
-
             if (Disposed) return;
             
-            if (OnFinal is not null)
-                UnityMainThreadDispatcher.Enqueue(OnFinal);
-            if (Continuation is not null)
-                UnityMainThreadDispatcher.Enqueue(Continuation);
+            OnFinal?.EnqueueToDispatcher();
+            Continuation?.EnqueueToDispatcher();
         }
 
         public static Promise WhenAll(Promise[] promises) =>

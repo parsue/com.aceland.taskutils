@@ -6,6 +6,18 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [1.0.9] - 2025-04-13
+### Added
+- [Dispatcher] for all PlayerLoopState
+- [Utility] Promise.WaitForEndOfFrame(Action)
+- [Extension] IEnumerator.RunCoroutine();
+- [Extension] Action.EnqueueToDispatcher<T>(Action<T>, T, PlayerLoopState)
+### Modified
+- [Utility] Promise.EnqueueToDispatcher() can set PlayerLoopState now
+- [Extension] Action.EnqueueToDispatcher can set PlayerLoopState now
+### Removed
+- [PromiseAgent] no access allowed, please use extension
+
 ## [1.0.8] - 2025-04-09
 ### Fixed
 - [Singleton] PromiseAgent - not handle AsTask on Agent not yet Ready 

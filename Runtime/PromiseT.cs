@@ -137,7 +137,7 @@ namespace AceLand.TaskUtils
                         if (!IsFault)
                         {
                             if (OnSuccess is not null)
-                                UnityMainThreadDispatcher.Enqueue(() => OnSuccess(Result));
+                                UnityMainThreadDispatchers.Enqueue(() => OnSuccess(Result));
                             
                             Success();
                         }
@@ -156,7 +156,7 @@ namespace AceLand.TaskUtils
                 foreach (var exception in t.Exception.InnerExceptions)
                 {
                     if (OnError is not null)
-                        UnityMainThreadDispatcher.Enqueue(() => OnError(exception));
+                        UnityMainThreadDispatchers.Enqueue(() => OnError(exception));
                 }
 
                 Exception = t.Exception.InnerExceptions[0]; 
@@ -164,7 +164,7 @@ namespace AceLand.TaskUtils
             else
             {
                 Exception = t.Exception ?? new Exception("unknown exception");
-                UnityMainThreadDispatcher.Enqueue(() => OnError(t.Exception));
+                UnityMainThreadDispatchers.Enqueue(() => OnError(t.Exception));
             }
         }
 
@@ -175,9 +175,9 @@ namespace AceLand.TaskUtils
             if (Disposed) return;
             
             if (OnFinal is not null)
-                UnityMainThreadDispatcher.Enqueue(OnFinal);
+                UnityMainThreadDispatchers.Enqueue(OnFinal);
             if (Continuation is not null)
-                UnityMainThreadDispatcher.Enqueue(Continuation);
+                UnityMainThreadDispatchers.Enqueue(Continuation);
         }
 
         internal Task<T> AsTask() => TaskCompletionSource.Task;

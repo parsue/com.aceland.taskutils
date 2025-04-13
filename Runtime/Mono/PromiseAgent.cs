@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace AceLand.TaskUtils.Mono
 {
-    public class PromiseAgent : Singleton<PromiseAgent>
+    internal sealed class PromiseAgent : Singleton<PromiseAgent>
     {
         private static bool Ready;
         private static bool Destroyed;
@@ -29,7 +29,7 @@ namespace AceLand.TaskUtils.Mono
             Debug.LogWarning("Promise Agent Destroyed");
         }
 
-        public static void CoroutineAgent(IEnumerator enumerator)
+        internal static void CoroutineAgent(IEnumerator enumerator)
         {
             if (Destroyed)
                 throw new UnityException("Promise Agent Destroyed");

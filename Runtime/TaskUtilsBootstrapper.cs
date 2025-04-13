@@ -7,13 +7,13 @@ namespace AceLand.TaskUtils
     internal static class TaskUtilsBootstrapper
     {
         private static ApplicationAliveSystem _aliveSystem;
-        private static UnityMainThreadDispatcher _dispatcher;
+        private static UnityMainThreadDispatchers _dispatchers;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterAssembliesLoaded)]
         private static void Initial()
         {
             _aliveSystem = new ApplicationAliveSystem();
-            _dispatcher = new UnityMainThreadDispatcher();
+            _dispatchers = new UnityMainThreadDispatchers();
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]

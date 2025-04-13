@@ -1,7 +1,10 @@
 ﻿using System;
+using System.Collections;
 using System.Threading;
 using System.Threading.Tasks;
+using AceLand.PlayerLoopHack;
 using AceLand.TaskUtils.PlayerLoopSystems;
+using UnityEngine;
 
 namespace AceLand.TaskUtils
 {
@@ -43,11 +46,23 @@ namespace AceLand.TaskUtils
                 ApplicationAliveToken
             );
 
-        public static void EnqueueToDispatcher(Action action) =>
-            UnityMainThreadDispatcher.Enqueue(action);
+        public static Task WaitForEndOfFrame(Action action) =>
+            EndOfFrameCoroutine(action).AsTask();
+
+        public static void EnqueueToDispatcher(Action action, PlayerLoopState state = PlayerLoopState.Initialization) =>
+            UnityMainThreadDispatchers.Enqueue(action, state);
+
+        public static void EnqueueToDispatcher<T>(Action<T> action, T arg, PlayerLoopState state = PlayerLoopState.Initialization) =>
+            UnityMainThreadDispatchers.Enqueue(action, arg, state);
         public static void AddApplicationQuitListener(Action listener) => 
             ApplicationAliveSystem.OnApplicationQuit += listener;
         public static void RemoveApplicationQuitListener(Action listener) => 
             ApplicationAliveSystem.OnApplicationQuit -= listener;
+
+        private static IEnumerator EndOfFrameCoroutine(Action action)
+        {
+            yield return new WaitForEndOfFrame();
+            action?.Invoke();
+        }
     }
 }

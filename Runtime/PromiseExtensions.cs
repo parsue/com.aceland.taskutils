@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Threading.Tasks;
+using AceLand.PlayerLoopHack;
 using AceLand.TaskUtils.Mono;
 using AceLand.TaskUtils.PlayerLoopSystems;
 
@@ -8,8 +9,13 @@ namespace AceLand.TaskUtils
 {
     public static class PromiseExtensions
     {
-        public static void EnqueueToDispatcher(this Action action) =>
-            UnityMainThreadDispatcher.Enqueue(action);
+        public static void RunCoroutine(this IEnumerator coroutine) =>
+            PromiseAgent.CoroutineAgent(coroutine);
+        
+        public static void EnqueueToDispatcher(this Action action, PlayerLoopState state = PlayerLoopState.Initialization) =>
+            UnityMainThreadDispatchers.Enqueue(action, state);
+        public static void EnqueueToDispatcher<T>(this Action<T> action, T arg, PlayerLoopState state = PlayerLoopState.Initialization) =>
+            UnityMainThreadDispatchers.Enqueue(action, arg, state);
         
         public static Task AsTask(this IEnumerator enumerator) =>
             PromiseAgent.RunCoroutine(enumerator);
