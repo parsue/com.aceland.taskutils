@@ -1,11 +1,8 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using AceLand.TaskUtils.Core;
 using AceLand.TaskUtils.Handles;
-using UnityEngine;
 
 namespace AceLand.TaskUtils
 {
@@ -201,22 +198,6 @@ namespace AceLand.TaskUtils
             Continuation?.EnqueueToDispatcher();
         }
 
-        public static Promise WhenAll(Promise[] promises) =>
-            Task.WhenAll(promises.Select(promise => promise.AsTask()).ToArray());
-        public static Promise<T[]> WhenAll<T>(Promise<T>[] promises) =>
-            Task.WhenAll(promises.Select(p => p.AsTask()).ToArray());
-
-        public static Promise WhenAll(List<Promise> promises) =>
-            Task.WhenAll(promises.Select(promise => promise.AsTask()).ToArray());
-        public static Promise<T[]> WhenAll<T>(List<Promise<T>> promises) =>
-            Task.WhenAll(promises.Select(p => p.AsTask()).ToArray());
-
-        public static Task SafeRun(Action action) =>
-            Task.Run(action, ApplicationAliveToken);
-        public static Task SafeRun(Func<Task> action) =>
-            Task.Run(async () => await action.Invoke(), ApplicationAliveToken);
-
-        internal Task AsTask() => TaskCompletionSource.Task;
         public static implicit operator Promise(Task task) => Create<Exception>(task);
         public static implicit operator Task(Promise promise) => promise.AsTask();
     }

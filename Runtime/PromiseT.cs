@@ -198,7 +198,6 @@ namespace AceLand.TaskUtils
             Continuation?.EnqueueToDispatcher();
         }
 
-        internal Task<T> AsTask() => TaskCompletionSource.Task;
         public static implicit operator Promise(Promise<T> promise) => promise.AsTask();
         public static implicit operator Promise<T>(Task<T> task) => Create<Exception>(task);
         public static implicit operator Task<T>(Promise<T> promise) => promise.AsTask();

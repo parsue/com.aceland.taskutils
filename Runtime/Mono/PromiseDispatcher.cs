@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace AceLand.TaskUtils.Mono
 {
-    internal sealed class PromiseAgent : Singleton<PromiseAgent>
+    internal sealed class PromiseDispatcher : Singleton<PromiseDispatcher>
     {
         private static bool Ready;
         private static bool Destroyed;

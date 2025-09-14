@@ -21,7 +21,7 @@ namespace AceLand.TaskUtils.Core
         public virtual Exception Exception { get; protected set; }
         public virtual T Result { get; protected set; }
 
-        private protected readonly TaskCompletionSource<T> TaskCompletionSource;
+        internal readonly TaskCompletionSource<T> TaskCompletionSource;
         private protected Action Continuation;
 
         protected override void DisposeManagedResources()
