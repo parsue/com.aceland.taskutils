@@ -20,23 +20,23 @@ namespace AceLand.TaskUtils
         public static Task AsTask(this IEnumerator enumerator) =>
             PromiseAgent.RunCoroutine(enumerator);
         
-        public static Promise<T> Then<T>(this Task<T> task, Action<T> onSuccess) =>
-            new(task, thenAction: onSuccess);
-        public static Promise<T> Then<T>(this Task<T> task, Func<T, Task> onSuccess) =>
-            new(task, thenTask: onSuccess);
-        public static Promise<T> Catch<T>(this Task<T> task, Action<Exception> onError) =>
-            new(task, catchAction: onError);
-        public static Promise<T> Final<T>(this Task<T> task, Action onFinal) =>
-            new(task, finalAction: onFinal);
-        
         public static Promise Then(this Task task, Action onSuccess) =>
-            new(task, thenAction: onSuccess);
+            Promise.Create<Exception>(task, thenAction: onSuccess);
         public static Promise Then(this Task task, Func<Task> onSuccess) =>
-            new(task, thenTask: onSuccess);
+            Promise.Create<Exception>(task, thenTask: onSuccess);
+        public static Promise<T> Then<T>(this Task<T> task, Action<T> onSuccess) =>
+            Promise<T>.Create<Exception>(task, thenAction: onSuccess);
+        public static Promise<T> Then<T>(this Task<T> task, Func<T, Task> onSuccess) =>
+            Promise<T>.Create<Exception>(task, thenTask: onSuccess);
+        
         public static Promise Catch(this Task task, Action<Exception> onError) =>
-            new(task, catchAction: onError);
+            Promise.Create(task, catchAction: onError);
+        public static Promise Catch<T>(this Task task, Action<T> onError)
+            where T : Exception=>
+            Promise.Create(task, catchAction: onError);
+        
         public static Promise Final(this Task task, Action onFinal) =>
-            new(task, finalAction: onFinal);
+            Promise.Create<Exception>(task, finalAction: onFinal);
 
         public static void Cancel(this Promise[] promises)
         {

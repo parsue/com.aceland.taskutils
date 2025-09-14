@@ -20,13 +20,13 @@ namespace AceLand.TaskUtils.Mono
         private void OnDisable()
         {
             Ready = false;
-            Debug.LogWarning("Promise Agent Disabling");
+            Debug.Log("Promise Agent Disabling");
         }
 
         private void OnDestroy()
         {
             Destroyed = true;
-            Debug.LogWarning("Promise Agent Destroyed");
+            Debug.Log("Promise Agent Destroyed");
         }
 
         internal static void CoroutineAgent(IEnumerator enumerator)

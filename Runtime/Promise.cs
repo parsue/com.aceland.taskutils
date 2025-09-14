@@ -4,22 +4,28 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using AceLand.TaskUtils.Core;
-using AceLand.TaskUtils.PlayerLoopSystems;
+using AceLand.TaskUtils.Handles;
+using UnityEngine;
 
 namespace AceLand.TaskUtils
 {
     public sealed partial class Promise : Awaiter<bool>
     {
-        internal Promise(Task task,
-            Action thenAction = null, Func<Task> thenTask = null,
-            Action<Exception> catchAction = null,
+        internal static Promise Create<TException>(Task task,
+            Action thenAction = null,
+            Func<Task> thenTask = null,
+            Action<TException> catchAction = null,
             Action finalAction = null)
+            where TException : Exception
         {
-            if (thenAction is not null) Then(thenAction);
-            if (thenTask is not null) Then(thenTask);
-            if (catchAction is not null) Catch(catchAction);
-            if (finalAction is not null) Final(finalAction);
-            HandleTask(task);
+            var p = new Promise();
+            
+            if (thenAction is not null) p.Then(thenAction);
+            if (thenTask is not null) p.Then(thenTask);
+            if (catchAction is not null) p.Catch(catchAction);
+            if (finalAction is not null) p.Final(finalAction);
+            p.HandleTask(task);
+            return p;
         }
         
         protected override void DisposeManagedResources()
@@ -33,14 +39,16 @@ namespace AceLand.TaskUtils
             base.Cancel();
             OnSuccess = null;
             OnSuccessTask = null;
-            OnError = null;
+            CatchHandle.Dispose();
             _tokenSource?.Cancel();
             _tokenSource?.Dispose();
         }
         
+        private CatchHandle CatchHandle { get; } = new();
+        
         private Action OnSuccess { get; set; }
         private Func<Task> OnSuccessTask { get; set; }
-        private Action<Exception> OnError { get; set; }
+
         private Action OnFinal { get; set; }
         
         private CancellationTokenSource _tokenSource;
@@ -79,11 +87,30 @@ namespace AceLand.TaskUtils
             
             if (IsFault)
             {
-                onError?.Invoke(Exception);
+                var e = CatchHandle.GetException<Exception>();
+                CatchHandle.Invoke(e);
                 return this;
             }
 
-            OnError += onError;
+            CatchHandle.AddHandler(onError);
+            return this;
+        }
+        
+        public Promise Catch<T>(Action<T> onError)
+            where T : Exception
+        {
+            if (Disposed || IsCanceled) return this;
+            
+            if (IsFault)
+            {
+                var eT = CatchHandle.GetException<T>();
+                if (eT == null) return Catch(onError);
+                
+                CatchHandle.Invoke(Exception);
+                return this;
+            }
+
+            CatchHandle.AddHandler(onError);
             return this;
         }
         
@@ -154,13 +181,14 @@ namespace AceLand.TaskUtils
             if (t.Exception?.InnerExceptions.Count > 0)
             {
                 foreach (var exception in t.Exception.InnerExceptions)
-                    OnError?.EnqueueToDispatcher(exception);
+                    CatchHandle.Invoke(exception);
+                
                 Exception = t.Exception.InnerExceptions[0];
             }
             else
             {
                 Exception = t.Exception ?? new Exception("unknown exception");
-                OnError?.EnqueueToDispatcher(Exception);
+                CatchHandle.Invoke(Exception);
             }
         }
 
@@ -189,7 +217,7 @@ namespace AceLand.TaskUtils
             Task.Run(async () => await action.Invoke(), ApplicationAliveToken);
 
         internal Task AsTask() => TaskCompletionSource.Task;
-        public static implicit operator Promise(Task task) => new(task);
+        public static implicit operator Promise(Task task) => Create<Exception>(task);
         public static implicit operator Task(Promise promise) => promise.AsTask();
     }
 }

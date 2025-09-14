@@ -2,22 +2,28 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using AceLand.TaskUtils.Core;
+using AceLand.TaskUtils.Handles;
 using AceLand.TaskUtils.PlayerLoopSystems;
 
 namespace AceLand.TaskUtils
 {
     public sealed class Promise<T> : Awaiter<T>
     {
-        internal Promise(Task<T> task, 
-            Action<T> thenAction = null, Func<T, Task> thenTask = null,
-            Action<Exception> catchAction = null, 
+        internal static Promise<T> Create<TException>(Task<T> task,
+            Action<T> thenAction = null,
+            Func<T, Task> thenTask = null,
+            Action<TException> catchAction = null, 
             Action finalAction = null)
+            where TException : Exception
         {
-            if (thenAction is not null) Then(thenAction);
-            if (thenTask is not null) Then(thenTask);
-            if (catchAction is not null) Catch(catchAction);
-            if (finalAction is not null) Final(finalAction);
-            HandleTask(task);
+            var p = new Promise<T>();
+            
+            if (thenAction is not null) p.Then(thenAction);
+            if (thenTask is not null) p.Then(thenTask);
+            if (catchAction is not null) p.Catch(catchAction);
+            if (finalAction is not null) p.Final(finalAction);
+            p.HandleTask(task);
+            return p;
         }
         
         protected override void DisposeManagedResources()
@@ -31,14 +37,16 @@ namespace AceLand.TaskUtils
             base.Cancel();
             OnSuccess = null;
             OnSuccessTask = null;
-            OnError = null;
+            CatchHandle.Dispose();
             _tokenSource?.Cancel();
             _tokenSource?.Dispose();
         }
+        
+        private CatchHandle CatchHandle { get; } = new();
 
         private Action<T> OnSuccess { get; set; }
         private Func<T, Task> OnSuccessTask { get; set; }
-        private Action<Exception> OnError { get; set; }
+        
         private Action OnFinal { get; set; }
         
         private CancellationTokenSource _tokenSource;
@@ -77,11 +85,26 @@ namespace AceLand.TaskUtils
             
             if (IsFault)
             {
-                onError?.Invoke(Exception);
+                CatchHandle.Invoke(Exception);
                 return this;
             }
             
-            OnError += onError;
+            CatchHandle.AddHandler(onError);
+            return this;
+        }
+        
+        public Promise<T> Catch<TException>(Action<TException> onError)
+            where TException : Exception
+        {
+            if (IsCanceled || Disposed) return this;
+            
+            if (IsFault)
+            {
+                CatchHandle.Invoke(Exception);
+                return this;
+            }
+            
+            CatchHandle.AddHandler(onError);
             return this;
         }
         
@@ -154,17 +177,14 @@ namespace AceLand.TaskUtils
             if (t.Exception?.InnerExceptions.Count > 0)
             {
                 foreach (var exception in t.Exception.InnerExceptions)
-                {
-                    if (OnError is not null)
-                        UnityMainThreadDispatchers.Enqueue(() => OnError(exception));
-                }
+                    CatchHandle.Invoke(exception);
 
                 Exception = t.Exception.InnerExceptions[0]; 
             }
             else
             {
                 Exception = t.Exception ?? new Exception("unknown exception");
-                UnityMainThreadDispatchers.Enqueue(() => OnError(t.Exception));
+                CatchHandle.Invoke(Exception);
             }
         }
 
@@ -173,16 +193,14 @@ namespace AceLand.TaskUtils
             IsCompleted = true;
 
             if (Disposed) return;
-            
-            if (OnFinal is not null)
-                UnityMainThreadDispatchers.Enqueue(OnFinal);
-            if (Continuation is not null)
-                UnityMainThreadDispatchers.Enqueue(Continuation);
+
+            OnFinal?.EnqueueToDispatcher();
+            Continuation?.EnqueueToDispatcher();
         }
 
         internal Task<T> AsTask() => TaskCompletionSource.Task;
         public static implicit operator Promise(Promise<T> promise) => promise.AsTask();
-        public static implicit operator Promise<T>(Task<T> task) => new(task);
+        public static implicit operator Promise<T>(Task<T> task) => Create<Exception>(task);
         public static implicit operator Task<T>(Promise<T> promise) => promise.AsTask();
     }
 }
