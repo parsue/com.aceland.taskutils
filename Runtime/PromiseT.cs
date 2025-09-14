@@ -2,12 +2,11 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using AceLand.TaskUtils.Core;
-using AceLand.TaskUtils.Handles;
 using AceLand.TaskUtils.PlayerLoopSystems;
 
 namespace AceLand.TaskUtils
 {
-    public sealed class Promise<T> : Awaiter<T>
+    public sealed class Promise<T> : PromiseBase<T>
     {
         internal static Promise<T> Create<TException>(Task<T> task,
             Action<T> thenAction = null,
@@ -25,32 +24,17 @@ namespace AceLand.TaskUtils
             p.HandleTask(task);
             return p;
         }
-        
-        protected override void DisposeManagedResources()
-        {
-            base.DisposeManagedResources();
-            Cancel();
-        }
 
         public override void Cancel()
         {
             base.Cancel();
             OnSuccess = null;
             OnSuccessTask = null;
-            CatchHandle.Dispose();
-            _tokenSource?.Cancel();
-            _tokenSource?.Dispose();
         }
         
-        private CatchHandle CatchHandle { get; } = new();
-
         private Action<T> OnSuccess { get; set; }
         private Func<T, Task> OnSuccessTask { get; set; }
         
-        private Action OnFinal { get; set; }
-        
-        private CancellationTokenSource _tokenSource;
-
         public Promise<T> Then(Action<T> onSuccess)
         {
             if (IsCanceled || Disposed) return this;
@@ -124,8 +108,8 @@ namespace AceLand.TaskUtils
 
         private void HandleTask(Task<T> task)
         {
-            _tokenSource = new CancellationTokenSource();
-            var linkedToken = Promise.LinkedOrApplicationAliveToken(_tokenSource,
+            TokenSource = new CancellationTokenSource();
+            var linkedToken = Promise.LinkedOrApplicationAliveToken(TokenSource,
                 out var linkedTokenSource);
 
             task.ContinueWith(t =>
@@ -170,32 +154,6 @@ namespace AceLand.TaskUtils
                 },
                 cancellationToken: linkedToken
             );
-        }
-        
-        private void OnException(Task t)
-        {
-            if (t.Exception?.InnerExceptions.Count > 0)
-            {
-                foreach (var exception in t.Exception.InnerExceptions)
-                    CatchHandle.Invoke(exception);
-
-                Exception = t.Exception.InnerExceptions[0]; 
-            }
-            else
-            {
-                Exception = t.Exception ?? new Exception("unknown exception");
-                CatchHandle.Invoke(Exception);
-            }
-        }
-
-        private void OnFinalize(CancellationTokenSource linkedTokenSource)
-        {
-            IsCompleted = true;
-
-            if (Disposed) return;
-
-            OnFinal?.EnqueueToDispatcher();
-            Continuation?.EnqueueToDispatcher();
         }
 
         public static implicit operator Promise(Promise<T> promise) => promise.AsTask();

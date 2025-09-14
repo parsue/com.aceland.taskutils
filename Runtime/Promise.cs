@@ -2,11 +2,10 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using AceLand.TaskUtils.Core;
-using AceLand.TaskUtils.Handles;
 
 namespace AceLand.TaskUtils
 {
-    public sealed partial class Promise : Awaiter<bool>
+    public sealed partial class Promise : PromiseBase<bool>
     {
         internal static Promise Create<TException>(Task task,
             Action thenAction = null,
@@ -24,31 +23,16 @@ namespace AceLand.TaskUtils
             p.HandleTask(task);
             return p;
         }
-        
-        protected override void DisposeManagedResources()
-        {
-            base.DisposeManagedResources();
-            Cancel();
-        }
 
         public override void Cancel()
         {
             base.Cancel();
             OnSuccess = null;
             OnSuccessTask = null;
-            CatchHandle.Dispose();
-            _tokenSource?.Cancel();
-            _tokenSource?.Dispose();
         }
-        
-        private CatchHandle CatchHandle { get; } = new();
         
         private Action OnSuccess { get; set; }
         private Func<Task> OnSuccessTask { get; set; }
-
-        private Action OnFinal { get; set; }
-        
-        private CancellationTokenSource _tokenSource;
 
         public Promise Then(Action onSuccess)
         {
@@ -127,8 +111,8 @@ namespace AceLand.TaskUtils
 
         private void HandleTask(Task task)
         {
-            _tokenSource = new CancellationTokenSource();
-            var linkedToken = LinkedOrApplicationAliveToken(_tokenSource,
+            TokenSource = new CancellationTokenSource();
+            var linkedToken = LinkedOrApplicationAliveToken(TokenSource,
                 out var linkedTokenSource);
 
             task.ContinueWith(t =>
@@ -171,31 +155,6 @@ namespace AceLand.TaskUtils
                 },
                 cancellationToken: linkedToken
             );
-        }
-
-        private void OnException(Task t)
-        {
-            if (t.Exception?.InnerExceptions.Count > 0)
-            {
-                foreach (var exception in t.Exception.InnerExceptions)
-                    CatchHandle.Invoke(exception);
-                
-                Exception = t.Exception.InnerExceptions[0];
-            }
-            else
-            {
-                Exception = t.Exception ?? new Exception("unknown exception");
-                CatchHandle.Invoke(Exception);
-            }
-        }
-
-        private void OnFinalize(CancellationTokenSource linkedTokenSource)
-        {
-            IsCompleted = true;
-            if (Disposed) return;
-            
-            OnFinal?.EnqueueToDispatcher();
-            Continuation?.EnqueueToDispatcher();
         }
 
         public static implicit operator Promise(Task task) => Create<Exception>(task);
