@@ -34,14 +34,9 @@ namespace AceLand.TaskUtils.PlayerLoopSystems
 
         internal static void Enqueue(Action action, PlayerLoopState state = PlayerLoopState.Initialization)
         {
+            if (action == null) return;
             var system = systems[state];
             system.Enqueue(action);
-        }
-
-        internal static void Enqueue<T>(Action<T> action, T arg, PlayerLoopState state = PlayerLoopState.Initialization)
-        {
-            var system = systems[state];
-            system.Enqueue(action, arg);
         }
     }
 }

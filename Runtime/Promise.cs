@@ -146,7 +146,7 @@ namespace AceLand.TaskUtils
 
                         if (!IsFault)
                         {
-                            OnSuccess?.EnqueueToDispatcher();
+                            Dispatcher.Run(OnSuccess);
                             Success();
                         }
                     }

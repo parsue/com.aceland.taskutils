@@ -1,18 +1,26 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using AceLand.PlayerLoopHack;
+using AceLand.TaskUtils.Handles;
 using AceLand.TaskUtils.Mono;
 using AceLand.TaskUtils.PlayerLoopSystems;
-using UnityEngine;
 
 namespace AceLand.TaskUtils
 {
     public sealed partial class Promise
     {
+        private static readonly PromiseDispatcher promiseDispatcher = new();
+
+        internal static void PromiseAgentReady(PromiseAgent agent, bool ready)
+        {
+            promiseDispatcher.PromiseAgent = agent;
+            promiseDispatcher.Ready = ready;
+        } 
+        
+        public static IPromiseDispatcher Dispatcher => promiseDispatcher;
+        
         public static CancellationToken ApplicationAliveToken => 
             ApplicationAliveSystem.ApplicationAliveTokenSource.Token;
 
@@ -32,22 +40,26 @@ namespace AceLand.TaskUtils
             return linkedTokenSource.Token;
         }
 
-        public static Task WaitForSeconds(float seconds) =>
-            Task.Run(async () =>
+        public static Promise WaitForSeconds(float seconds)
+        {
+            return Task.Run(async () =>
                 {
                     await Task.Delay(TimeSpan.FromSeconds(seconds), ApplicationAliveToken);
                 },
                 ApplicationAliveToken
             );
+        }
 
-        public static Task WaitUntil(Func<bool> condition) =>
-            Task.Run(async () =>
+        public static Promise WaitUntil(Func<bool> condition)
+        {
+            return Task.Run(async () =>
                 {
                     while (!condition() && !ApplicationAliveToken.IsCancellationRequested)
-                        await Task.Delay(100, ApplicationAliveToken);
+                        await Task.Delay(50, ApplicationAliveToken);
                 },
                 ApplicationAliveToken
             );
+        }
 
         public static Promise WhenAll(Promise[] promises) =>
             Task.WhenAll(promises.Select(promise => promise.AsTask()).ToArray());
@@ -58,31 +70,24 @@ namespace AceLand.TaskUtils
         public static Promise<T[]> WhenAll<T>(List<Promise<T>> promises) =>
             Task.WhenAll(promises.Select(p => p.AsTask()).ToArray());
 
-        public static Task SafeRun(Action action) =>
+        public static Promise Run(Action action) =>
             Task.Run(action, ApplicationAliveToken);
-        public static Task SafeRun(Func<Task> action) =>
-            Task.Run(async () => await action.Invoke(), ApplicationAliveToken);
-        
-        public static void RunCoroutine(IEnumerator coroutine) =>
-            PromiseDispatcher.CoroutineAgent(coroutine);
-
-        public static void EnqueueToDispatcher(Action action, PlayerLoopState state = PlayerLoopState.Initialization) =>
-            UnityMainThreadDispatchers.Enqueue(action, state);
-        public static void EnqueueToDispatcher<T>(Action<T> action, T arg, PlayerLoopState state = PlayerLoopState.Initialization) =>
-            UnityMainThreadDispatchers.Enqueue(action, arg, state);
+        public static Promise Run<T>(Action<T> action, T arg) =>
+            Task.Run(() => action(arg), ApplicationAliveToken);
+        public static Promise<T> Run<T>(Func<T> action) =>
+            Task.Run(action, ApplicationAliveToken);
+        public static Promise<T> Run<T, TArg>(Func<TArg, T> action, TArg arg) =>
+            Task.Run(() => action(arg), ApplicationAliveToken);
+        public static Promise Run(Func<Task> action) =>
+            Task.Run(async () => await action(), ApplicationAliveToken);
+        public static Promise<T> Run<T>(Func<Task<T>> action) =>
+            Task.Run(async () => await action(), ApplicationAliveToken);
+        public static Promise<T> Run<T, TArg>(Func<TArg, Task<T>> action, TArg arg) =>
+            Task.Run(async () => await action(arg), ApplicationAliveToken);
         
         public static void AddApplicationQuitListener(Action listener) => 
             ApplicationAliveSystem.OnApplicationQuit += listener;
         public static void RemoveApplicationQuitListener(Action listener) => 
             ApplicationAliveSystem.OnApplicationQuit -= listener;
-
-        public static Task WaitForEndOfFrame(Action action) =>
-            EndOfFrameCoroutine(action).AsTask();
-
-        private static IEnumerator EndOfFrameCoroutine(Action action)
-        {
-            yield return new WaitForEndOfFrame();
-            action?.Invoke();
-        }
     }
 }

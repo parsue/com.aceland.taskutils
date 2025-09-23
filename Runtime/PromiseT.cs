@@ -143,9 +143,7 @@ namespace AceLand.TaskUtils
 
                         if (!IsFault)
                         {
-                            if (OnSuccess is not null)
-                                UnityMainThreadDispatchers.Enqueue(() => OnSuccess(Result));
-                            
+                            Promise.Dispatcher.Run(() => OnSuccess?.Invoke(Result));
                             Success();
                         }
                     }

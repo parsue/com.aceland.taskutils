@@ -157,7 +157,7 @@ namespace AceLand.TaskUtils.Handles
             public void Invoke(T exception)
             {
                 Exception = exception;
-                Action?.EnqueueToDispatcher(exception);
+                Promise.Dispatcher.Run(() => Action?.Invoke(exception));
             }
             
             public void AddHandler(Action<T> handler)

@@ -19,7 +19,7 @@
     "utils"
   ],
   "dependencies": {
-    "com.aceland.library": "1.0.20",
+    "com.aceland.library": "2.0.3",
     "com.aceland.playerloophack": "1.0.7"
   },
   "publishConfig": {

@@ -20,7 +20,7 @@ namespace AceLand.TaskUtils
         private static void InitialPromiseAgent()
         {
             var go = new GameObject();
-            go.AddComponent<PromiseDispatcher>();
+            go.AddComponent<PromiseAgent>();
             go.name = "Promise Agent";
             Debug.Log("Promise Agent Initialized");
         }

@@ -48,8 +48,8 @@ namespace AceLand.TaskUtils.Core
             IsCompleted = true;
             if (Disposed) return;
 
-            OnFinal?.EnqueueToDispatcher();
-            Continuation?.EnqueueToDispatcher();
+            Promise.Dispatcher.Run(OnFinal);
+            Promise.Dispatcher.Run(Continuation);
         }
     }
 }

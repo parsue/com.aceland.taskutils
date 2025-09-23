@@ -4,10 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using AceLand.PlayerLoopHack;
-using AceLand.TaskUtils.Mono;
 using AceLand.TaskUtils.PlayerLoopSystems;
-using UnityEngine;
 
 namespace AceLand.TaskUtils
 {
@@ -15,6 +12,11 @@ namespace AceLand.TaskUtils
     {
         private static CancellationToken ApplicationAliveToken => 
             ApplicationAliveSystem.ApplicationAliveTokenSource.Token;
+        
+        public static void StartCoroutine(this IEnumerator enumerator) =>
+            Promise.Dispatcher.StartCoroutine(enumerator);
+        public static Promise StartCoroutineAsTask(this IEnumerator enumerator) =>
+            Promise.Dispatcher.StartCoroutineAsTask(enumerator);
         
         public static Promise WhenAll(this Promise[] promises) =>
             Task.WhenAll(promises.Select(promise => promise.AsTask()).ToArray());
@@ -25,27 +27,6 @@ namespace AceLand.TaskUtils
         public static Promise<T[]> WhenAll<T>(this List<Promise<T>> promises) =>
             Task.WhenAll(promises.Select(p => p.AsTask()).ToArray());
 
-        public static Task SafeRun(this Action action) =>
-            Task.Run(action, ApplicationAliveToken);
-        public static Task SafeRun(this Func<Task> action) =>
-            Task.Run(async () => await action.Invoke(), ApplicationAliveToken);
-        
-        public static void RunCoroutine(this IEnumerator coroutine) =>
-            PromiseDispatcher.CoroutineAgent(coroutine);
-        
-        public static void EnqueueToDispatcher(this Action action, PlayerLoopState state = PlayerLoopState.Initialization) =>
-            UnityMainThreadDispatchers.Enqueue(action, state);
-        public static void EnqueueToDispatcher<T>(this Action<T> action, T arg, PlayerLoopState state = PlayerLoopState.Initialization) =>
-            UnityMainThreadDispatchers.Enqueue(action, arg, state);
-
-        private static IEnumerator EndOfFrameCoroutine(Action action)
-        {
-            yield return new WaitForEndOfFrame();
-            action?.Invoke();
-        }
-        
-        public static Task AsTask(this IEnumerator enumerator) =>
-            PromiseDispatcher.RunCoroutine(enumerator);
         public static Task AsTask(this Promise promise) => promise.TaskCompletionSource.Task;
         public static Task<T> AsTask<T>(this Promise<T> promise) => promise.TaskCompletionSource.Task;
         
