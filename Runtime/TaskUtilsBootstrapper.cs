@@ -1,21 +1,17 @@
+using AceLand.TaskUtils.Core;
 using AceLand.TaskUtils.Mono;
-using AceLand.TaskUtils.PlayerLoopSystems;
 using UnityEngine;
 
 namespace AceLand.TaskUtils
 {
     internal static class TaskUtilsBootstrapper
     {
-        private static ApplicationAliveSystem _aliveSystem;
-        private static UnityMainThreadDispatchers _dispatchers;
-
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterAssembliesLoaded)]
         private static void Initial()
         {
-            _aliveSystem = new ApplicationAliveSystem();
-            _dispatchers = new UnityMainThreadDispatchers();
+            PromiseHelper.Initial();
         }
-
+        
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void InitialPromiseAgent()
         {

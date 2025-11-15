@@ -7,35 +7,36 @@ namespace AceLand.TaskUtils.PlayerLoopSystems
 {
     internal class UnityMainThreadDispatchers
     {
-        internal UnityMainThreadDispatchers() => StartDispatchers();
+        internal static UnityMainThreadDispatchers Build() => new();
+        private UnityMainThreadDispatchers() => StartDispatchers();
         
-        private static readonly Dictionary<PlayerLoopState, DispatcherSystem> systems = new();
+        private readonly Dictionary<PlayerLoopState, DispatcherSystem> _systems = new();
 
         private void StartDispatchers()
         {
             var states = (PlayerLoopState[])Enum.GetValues(typeof(PlayerLoopState));
-            systems.Clear();
+            _systems.Clear();
             foreach (var state in states)
             {
-                var system = new DispatcherSystem(state);
-                systems[state] = system;
+                var system = DispatcherSystem.Build(state);
+                _systems[state] = system;
             }
             Promise.AddApplicationQuitListener(StopDispatchers);
-            Debug.Log($"Unity MainThread Dispatchers Started: {systems.Count} systems");
+            Debug.Log($"Unity MainThread Dispatchers Started: {_systems.Count} systems");
         }
 
         private void StopDispatchers()
         {
-            foreach (var system in systems.Values)
+            foreach (var system in _systems.Values)
                 system.SystemStop();
-            systems.Clear();
-            Debug.Log($"Unity MainThread Dispatcher Stop: {systems.Count} systems");
+            _systems.Clear();
+            Debug.Log($"Unity MainThread Dispatcher Stop: {_systems.Count} systems");
         }
 
-        internal static void Enqueue(Action action, PlayerLoopState state = PlayerLoopState.Initialization)
+        internal void Enqueue(Action action, PlayerLoopState state = PlayerLoopState.Initialization)
         {
             if (action == null) return;
-            var system = systems[state];
+            var system = _systems[state];
             system.Enqueue(action);
         }
     }

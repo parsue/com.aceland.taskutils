@@ -2,20 +2,23 @@
 using System.Collections;
 using System.Threading.Tasks;
 using AceLand.PlayerLoopHack;
+using AceLand.TaskUtils.Core;
 using AceLand.TaskUtils.Mono;
-using AceLand.TaskUtils.PlayerLoopSystems;
 using UnityEngine;
 
 namespace AceLand.TaskUtils.Handles
 {
     internal class PromiseDispatcher : IPromiseDispatcher
     {
+        public static PromiseDispatcher Build() => new();
+        private PromiseDispatcher() {}
+        
         internal bool Ready;
         internal PromiseAgent PromiseAgent;
 
         public void Run(Action action, PlayerLoopState state = PlayerLoopState.Initialization)
         {
-            UnityMainThreadDispatchers.Enqueue(action, state);
+            PromiseHelper.MainThreadDispatcher.Enqueue(action, state);
         }
 
         public void RunOnEndOfFrame(Action action)
@@ -66,7 +69,7 @@ namespace AceLand.TaskUtils.Handles
             return tcs.Task;
         }
         
-        private static IEnumerator CoroutineToTask(IEnumerator enumerator, TaskCompletionSource<object> tcs)
+        private IEnumerator CoroutineToTask(IEnumerator enumerator, TaskCompletionSource<object> tcs)
         {
             while (true)
             {
