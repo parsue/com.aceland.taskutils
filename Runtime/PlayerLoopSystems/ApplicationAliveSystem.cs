@@ -8,9 +8,11 @@ namespace AceLand.TaskUtils.PlayerLoopSystems
 {
     internal class ApplicationAliveSystem : IPlayerLoopSystem
     {
-        internal ApplicationAliveSystem() => SystemStart();
-        internal static CancellationTokenSource ApplicationAliveTokenSource;
-        internal static event Action OnApplicationQuit;
+        public static ApplicationAliveSystem Build() => new();
+        private ApplicationAliveSystem() => SystemStart();
+        
+        internal CancellationTokenSource ApplicationAliveTokenSource;
+        internal event Action OnApplicationQuit;
 
         private PlayerLoopSystem _system;
         

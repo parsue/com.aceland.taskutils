@@ -3,26 +3,26 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using AceLand.TaskUtils.Core;
 using AceLand.TaskUtils.Handles;
 using AceLand.TaskUtils.Mono;
 using AceLand.TaskUtils.PlayerLoopSystems;
+using UnityEngine;
 
 namespace AceLand.TaskUtils
 {
     public sealed partial class Promise
     {
-        private static readonly PromiseDispatcher promiseDispatcher = new();
-
         internal static void PromiseAgentReady(PromiseAgent agent, bool ready)
         {
-            promiseDispatcher.PromiseAgent = agent;
-            promiseDispatcher.Ready = ready;
+            PromiseHelper.PromiseDispatcher.PromiseAgent = agent;
+            PromiseHelper.PromiseDispatcher.Ready = ready;
         } 
         
-        public static IPromiseDispatcher Dispatcher => promiseDispatcher;
+        public static IPromiseDispatcher Dispatcher => PromiseHelper.PromiseDispatcher;
         
         public static CancellationToken ApplicationAliveToken => 
-            ApplicationAliveSystem.ApplicationAliveTokenSource.Token;
+            PromiseHelper.AliveSystem.ApplicationAliveTokenSource.Token;
 
         public static CancellationToken LinkedOrApplicationAliveToken(CancellationTokenSource tokenSource,
             out CancellationTokenSource linkedTokenSource)
@@ -86,8 +86,8 @@ namespace AceLand.TaskUtils
             Task.Run(async () => await action(arg), ApplicationAliveToken);
         
         public static void AddApplicationQuitListener(Action listener) => 
-            ApplicationAliveSystem.OnApplicationQuit += listener;
+            PromiseHelper.AliveSystem.OnApplicationQuit += listener;
         public static void RemoveApplicationQuitListener(Action listener) => 
-            ApplicationAliveSystem.OnApplicationQuit -= listener;
+            PromiseHelper.AliveSystem.OnApplicationQuit -= listener;
     }
 }

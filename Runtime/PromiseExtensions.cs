@@ -4,14 +4,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using AceLand.TaskUtils.PlayerLoopSystems;
+using AceLand.TaskUtils.Core;
 
 namespace AceLand.TaskUtils
 {
     public static class PromiseExtensions
     {
         private static CancellationToken ApplicationAliveToken => 
-            ApplicationAliveSystem.ApplicationAliveTokenSource.Token;
+            PromiseHelper.AliveSystem.ApplicationAliveTokenSource.Token;
         
         public static void StartCoroutine(this IEnumerator enumerator) =>
             Promise.Dispatcher.StartCoroutine(enumerator);

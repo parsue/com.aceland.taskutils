@@ -8,49 +8,50 @@ namespace AceLand.TaskUtils.PlayerLoopSystems
 {
     internal class DispatcherSystem : IPlayerLoopSystem
     {
-        internal DispatcherSystem(PlayerLoopState state) => SystemStart(state);
+        public static DispatcherSystem Build(PlayerLoopState state) => new(state);
+        private DispatcherSystem(PlayerLoopState state) => SystemStart(state);
         
-        private static readonly Queue<Action> executionQueue = new();
-        private PlayerLoopState currentPlayerLoopState;
+        private readonly Queue<Action> _executionQueue = new();
+        private PlayerLoopState _playerLoopState;
         private PlayerLoopSystem _system;
         
         private void SystemStart(PlayerLoopState state)
         {
-            currentPlayerLoopState = state;
+            _playerLoopState = state;
             _system = this.CreatePlayerLoopSystem();
             _system.InjectSystem(state, 0);
             Promise.AddApplicationQuitListener(SystemStop);
-            Debug.Log($"Dispatcher {state} Start");
         }
 
         internal void SystemStop()
         {
-            _system.RemoveSystem(currentPlayerLoopState);
-            Debug.Log("Unity MainThread Dispatcher Stop");
+            _system.RemoveSystem(_playerLoopState);
         }
         
         public void SystemUpdate()
         {
-            lock (executionQueue)
+            lock (_executionQueue)
             {
-                while (executionQueue.Count > 0)
-                    executionQueue.Dequeue()?.Invoke();
+                while (_executionQueue.Count > 0)
+                {
+                    _executionQueue.Dequeue()?.Invoke();
+                }
             }
         }
 
         internal void Enqueue(Action action)
         {
-            lock (executionQueue)
+            lock (_executionQueue)
             {
-                executionQueue.Enqueue(action);
+                _executionQueue.Enqueue(action);
             }
         }
 
         internal void Enqueue<T>(Action<T> action, T arg)
         {
-            lock (executionQueue)
+            lock (_executionQueue)
             {
-                executionQueue.Enqueue(() => action(arg));
+                _executionQueue.Enqueue(() => action(arg));
             }
         }
     }
