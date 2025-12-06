@@ -1,6 +1,6 @@
 {
   "name": "com.aceland.taskutils",
-  "version": "2.0.3",
+  "version": "2.0.4",
   "unity": "2022.3",
   "displayName": "AceLand Task Utils",
   "description": "AceLand Task Utils is a c# Task implement package.\n\nPlease visit our [Git Book](https://aceland-workshop.gitbook.io/aceland-unity-packages).",
@@ -10,8 +10,8 @@
   },
   "author": {
     "name": "Parsue - AceLand Workshop",
-    "email": "parsue@gmail.com",
-    "url": "http://www.parsue.io/"
+    "url": "http://www.parsue.io/",
+    "email": "parsue@gmail.com"
   },
   "keywords": [
     "aceland",
@@ -19,12 +19,14 @@
     "utils"
   ],
   "dependencies": {
-    "com.aceland.library": "2.0.8",
-    "com.aceland.playerloophack": "1.0.8"
+    "com.aceland.library": "2.0.11",
+    "com.aceland.playerloophack": "1.0.9"
   },
   "publishConfig": {
     "registry": "https://package.openupm.com"
   },
   "documentationUrl": "https://docs.parsue.io/aceland-unity-packages/packages/task-utils",
-  "type": "utility"
+  "type": "utility",
+  "licensesUrl": "https://docs.parsue.io/aceland-unity-packages/getting-started/license",
+  "changelogUrl": "https://docs.parsue.io/aceland-unity-packages/packages/task-utils/change-log"
 }

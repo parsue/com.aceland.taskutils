@@ -2,7 +2,34 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+---
+
+## [2.0.4] - 2025-12-06
+### Modified
+- [package.json] add doc links
+
+## [2.0.3] - 2025-11-15
+### Fixed
+- [Dispatcher] run in correct state now
+### Modified
+- internal optimized
+
+## [2.0.2] - 2025-10-05
+### Added
+- [Json] Json Async tasks move from Library
+
+## [2.0.0] - 2025-09-23
+### Added
+- [Dependency] request ZLinq installed from NuGet
+- [Promise] catch different types of exceptions
+- [Dispatcher] Promise.Dispatcher
+- [Dispatcher] Run Action, RunOnEndOfFrame, StartCoroutine and StartCoroutineAsTask
+- [Extension] add all Promise functions to Extension
+- by returning Promise to ignore giving token for cancelation
+### Modified
+- optimize code with ZLinq
+- [Promise] new structure for flexiable exception listeners
+- [Extension] rename SafeRun to Run
 
 ---
 
