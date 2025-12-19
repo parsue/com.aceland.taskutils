@@ -40,7 +40,7 @@ namespace AceLand.TaskUtils
             
             if (IsSuccess)
             {
-                onSuccess?.Invoke();
+                Dispatcher.Run(onSuccess);
                 return this;
             }
 
@@ -52,11 +52,11 @@ namespace AceLand.TaskUtils
         {
             if (Disposed || IsCanceled) return this;
             
-            if (IsSuccess)
-            {
-                onSuccess?.Invoke();
-                return this;
-            }
+            // if (IsSuccess)
+            // {
+            //     onSuccess?.Invoke();
+            //     return this;
+            // }
 
             OnSuccessTask += onSuccess;
             return this;
@@ -68,8 +68,7 @@ namespace AceLand.TaskUtils
             
             if (IsFault)
             {
-                var e = CatchHandle.GetException<Exception>();
-                CatchHandle.Invoke(e);
+                Dispatcher.Run(() => onError(Exception));
                 return this;
             }
 
@@ -77,17 +76,16 @@ namespace AceLand.TaskUtils
             return this;
         }
         
-        public Promise Catch<T>(Action<T> onError)
-            where T : Exception
+        public Promise Catch<TException>(Action<TException> onError)
+            where TException : Exception
         {
             if (Disposed || IsCanceled) return this;
             
             if (IsFault)
             {
-                var eT = CatchHandle.GetException<T>();
-                if (eT == null) return Catch(onError);
+                if (Exception is TException targetException)
+                    Dispatcher.Run(() => onError?.Invoke(targetException));
                 
-                CatchHandle.Invoke(Exception);
                 return this;
             }
 
@@ -101,7 +99,7 @@ namespace AceLand.TaskUtils
 
             if (IsCompleted)
             {
-                onFinal?.Invoke();
+                Dispatcher.Run(onFinal);
                 return this;
             }
 

@@ -2,7 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using AceLand.TaskUtils.Core;
-using AceLand.TaskUtils.PlayerLoopSystems;
+using UnityEditor.Search;
 
 namespace AceLand.TaskUtils
 {
@@ -41,7 +41,7 @@ namespace AceLand.TaskUtils
             
             if (IsSuccess)
             {
-                onSuccess?.Invoke(Result);
+                Dispatcher.Run(() => onSuccess?.Invoke(Result));
                 return this;
             }
             
@@ -53,11 +53,11 @@ namespace AceLand.TaskUtils
         {
             if (IsCanceled || Disposed) return this;
             
-            if (IsSuccess)
-            {
-                onSuccess?.Invoke(Result);
-                return this;
-            }
+            // if (IsSuccess)
+            // {
+            //     onSuccess?.Invoke(Result);
+            //     return this;
+            // }
             
             OnSuccessTask += onSuccess;
             return this;
@@ -69,7 +69,7 @@ namespace AceLand.TaskUtils
             
             if (IsFault)
             {
-                CatchHandle.Invoke(Exception);
+                Dispatcher.Run(() => CatchHandle?.Invoke(Exception));
                 return this;
             }
             
@@ -84,7 +84,8 @@ namespace AceLand.TaskUtils
             
             if (IsFault)
             {
-                CatchHandle.Invoke(Exception);
+                if (Exception is TException targetException)
+                    Dispatcher.Run(() => onError?.Invoke(targetException));
                 return this;
             }
             
@@ -98,7 +99,7 @@ namespace AceLand.TaskUtils
             
             if (IsCompleted)
             {
-                onFinal?.Invoke();
+                Dispatcher.Run(onFinal);
                 return this;
             }
             
