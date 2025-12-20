@@ -1,11 +1,24 @@
-﻿using AceLand.Library.Mono;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace AceLand.TaskUtils.Mono
 {
-    internal sealed class PromiseAgent : Singleton<PromiseAgent>
+    internal sealed class PromiseAgent : MonoBehaviour
     {
+        private static PromiseAgent Instance { get; set; }
         internal bool Destroyed;
+
+        private void Awake()
+        {
+            if (Instance != null)
+            {
+                Destroy(gameObject);
+                return;
+            }
+
+            Instance = this;
+            transform.SetParent(null);
+            DontDestroyOnLoad(this);
+        }
 
         private void OnEnable()
         {
