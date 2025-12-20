@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 
 ---
+
+## [2.2.0] - 2025-12-20
+## Remove
+- [Dependency] completely separate from AceLand.Library
+- [JsonDataAsync] pass to AceLand.Serialization
+
 ## [2.1.3] - 2025-12-19
 ### Fixed
 - [Promise] chain actions not passing to main thread when the Task is completed.
