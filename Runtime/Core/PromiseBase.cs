@@ -21,7 +21,6 @@ namespace AceLand.TaskUtils.Core
             TokenSource?.Dispose();
         }
         
-        internal IPromiseDispatcher Dispatcher => Promise.Dispatcher;
         internal CatchHandle CatchHandle { get; } = new();
 
         protected Action OnFinal { get; set; }

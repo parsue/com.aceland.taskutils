@@ -41,7 +41,7 @@ namespace AceLand.TaskUtils
             
             if (IsSuccess)
             {
-                Dispatcher.Run(() => onSuccess?.Invoke(Result));
+                Promise.Dispatcher.Run(() => onSuccess?.Invoke(Result));
                 return this;
             }
             
@@ -69,7 +69,7 @@ namespace AceLand.TaskUtils
             
             if (IsFault)
             {
-                Dispatcher.Run(() => CatchHandle?.Invoke(Exception));
+                Promise.Dispatcher.Run(() => CatchHandle?.Invoke(Exception));
                 return this;
             }
             
@@ -85,7 +85,7 @@ namespace AceLand.TaskUtils
             if (IsFault)
             {
                 if (Exception is TException targetException)
-                    Dispatcher.Run(() => onError?.Invoke(targetException));
+                    Promise.Dispatcher.Run(() => onError?.Invoke(targetException));
                 return this;
             }
             
@@ -99,7 +99,7 @@ namespace AceLand.TaskUtils
             
             if (IsCompleted)
             {
-                Dispatcher.Run(onFinal);
+                Promise.Dispatcher.Run(onFinal);
                 return this;
             }
             
