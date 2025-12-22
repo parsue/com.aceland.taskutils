@@ -1,6 +1,6 @@
 {
   "name": "com.aceland.taskutils",
-  "version": "2.2.1",
+  "version": "2.2.2",
   "unity": "2022.3",
   "displayName": "AceLand Task Utils",
   "description": "AceLand Task Utils is a c# Task implement package.\n\nPlease visit our [Git Book](https://aceland-workshop.gitbook.io/aceland-unity-packages).",

@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [2.2.2] - 2025-12-22
+## Fixed
+- [Build] remove unused reference lines that will caused build error
+
 ## [2.2.1] - 2025-12-21
 ## Modified
 - Dependency
@@ -15,7 +19,7 @@ All notable changes to this project will be documented in this file.
 
 ## [2.1.3] - 2025-12-19
 ### Fixed
-- [Promise] chain actions not passing to main thread when the Task is completed.
+- [Promise] chain actions not passing to main thread when the Task is completed
 - [Promise] catch only Exception on task is completed
 
 ## [2.1.1] - 2025-12-13
