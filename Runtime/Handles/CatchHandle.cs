@@ -26,12 +26,13 @@ namespace AceLand.TaskUtils.Handles
         public void Invoke<T>(T exception) where T : Exception
         {
             if (Disposed) return;
-            
-            var runtimeType = exception.GetType();
+
+            var ex = exception.InnerException ?? exception.GetBaseException() ?? exception;
+            var runtimeType = ex.GetType();
 
             if (TryGet(runtimeType, out var handler))
             {
-                InvokeOnHandler(handler, exception);
+                InvokeOnHandler(handler, ex);
                 return;
             }
 
@@ -40,7 +41,7 @@ namespace AceLand.TaskUtils.Handles
             {
                 if (TryGet(baseType, out var baseHandler))
                 {
-                    InvokeOnHandler(baseHandler, exception);
+                    InvokeOnHandler(baseHandler, ex);
                     return;
                 }
 
@@ -48,7 +49,7 @@ namespace AceLand.TaskUtils.Handles
             }
 
             if (TryGet(typeof(Exception), out var defaultHandler))
-                InvokeOnHandler(defaultHandler, exception);
+                InvokeOnHandler(defaultHandler, ex);
             else
                 Debug.LogWarning("Promise Catch Error: No handler found for Exception");
         }
