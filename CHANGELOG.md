@@ -4,16 +4,20 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [2.2.3] - 2026-01-05
+### Fixed
+- [CatchHandle] catch incorrect exception type issue 
+
 ## [2.2.2] - 2025-12-22
-## Fixed
+### Fixed
 - [Build] remove unused reference lines that will caused build error
 
 ## [2.2.1] - 2025-12-21
-## Modified
+### Modified
 - Dependency
 - 
 ## [2.2.0] - 2025-12-20
-## Remove
+### Remove
 - [Dependency] completely separate from AceLand.Library
 - [JsonDataAsync] pass to AceLand.Serialization
 
