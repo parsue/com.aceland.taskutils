@@ -23,7 +23,7 @@ namespace AceLand.TaskUtils.Handles
 
         private readonly Dictionary<Type, IHandler> _handlers = new();
 
-        public void Invoke(Exception exception)
+        public void Invoke<T>(T exception) where T : Exception
         {
             if (Disposed) return;
             
@@ -67,7 +67,7 @@ namespace AceLand.TaskUtils.Handles
             Update<T>(handle);
         }
         
-        private static void InvokeOnHandler(IHandler handler, Exception ex)
+        private static void InvokeOnHandler<T>(IHandler handler, T ex) where T : Exception
         {
             var handlerType = handler.GetType();
 
