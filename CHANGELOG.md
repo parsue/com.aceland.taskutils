@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 ---
 
-## [2.2.3] - 2026-01-05
+## [2.2.4] - 2026-01-05
 ### Fixed
 - [CatchHandle] catch incorrect exception type issue 
 
