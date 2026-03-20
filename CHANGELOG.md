@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [2.2.5] - 2026-03-20
+### Fixed
+- [Promise] Cancellation Token already disposed issue on dispose a promise handle
+
 ## [2.2.4] - 2026-01-05
 ### Fixed
 - [CatchHandle] catch incorrect exception type issue 
