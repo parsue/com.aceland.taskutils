@@ -10,14 +10,18 @@ namespace AceLand.TaskUtils.Core
         protected override void DisposeManagedResources()
         {
             base.DisposeManagedResources();
+            
             Cancel();
         }
 
         public override void Cancel()
         {
             base.Cancel();
+            
+            if (TokenSource != null && !TokenSource.IsCancellationRequested)
+                TokenSource?.Cancel();
+            
             CatchHandle.Dispose();
-            TokenSource?.Cancel();
             TokenSource?.Dispose();
         }
         
