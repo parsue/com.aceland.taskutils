@@ -8,7 +8,7 @@ namespace AceLand.TaskUtils
 {
     public sealed partial class Promise
     {
-        public async Task WaitFor(float seconds, CancellationToken? token)
+        public async Task WaitForSeconds(float seconds, CancellationToken? token)
         {
             var tk = token ?? LifecycleToken.ApplicationAlive;
             var ms = (int)(seconds * 1000);
@@ -24,7 +24,7 @@ namespace AceLand.TaskUtils
         public async Task WaitUntil(Func<bool> condition, CancellationToken? token = null)
         {
             var tk = token ?? LifecycleToken.ApplicationAlive;
-            while (!condition())
+            while (!tk.IsCancellationRequested || !condition())
                 await Task.Delay(100, tk);
         }
 

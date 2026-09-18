@@ -10,27 +10,6 @@ namespace AceLand.TaskUtils
     public sealed partial class Promise
     {
         private static CancellationToken ApplicationAlive => LifecycleToken.ApplicationAlive;
-        
-        public static Promise WaitForSeconds(float seconds)
-        {
-            return Task.Run(async () =>
-                {
-                    await Task.Delay(TimeSpan.FromSeconds(seconds), ApplicationAlive);
-                },
-                ApplicationAlive
-            );
-        }
-
-        public static Promise WaitUntil(Func<bool> condition)
-        {
-            return Task.Run(async () =>
-                {
-                    while (!condition() && !ApplicationAlive.IsCancellationRequested)
-                        await Task.Delay(50, ApplicationAlive);
-                },
-                ApplicationAlive
-            );
-        }
 
         public static Promise WhenAll(Promise[] promises) =>
             Task.WhenAll(promises.Select(promise => promise.AsTask()).ToArray());

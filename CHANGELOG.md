@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [3.0.1] - 2026-09-18
+### Fixed
+- dead loop in WaitUntil()
+### Removed
+- duplicated functions
+- unused contract
+
 ## [3.0.0] - 2026-09-18
 ### Added
 - WaitForScaledTime(), WaitForNextFrame(), WaitForNextFixedFrame(), WaitForFrames() 
@@ -12,6 +19,7 @@ All notable changes to this project will be documented in this file.
 - [Dependence] use Lifecycle, remove other
 ### Removed
 - duplicated functions with Lifecycle 
+- Dispatcher is removed
 
 ---
 
