@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using AceLand.Lifecycle;
 using AceLand.TaskUtils.Core;
 
 namespace AceLand.TaskUtils
@@ -40,7 +41,7 @@ namespace AceLand.TaskUtils
             
             if (IsSuccess)
             {
-                Promise.Dispatcher.Run(() => onSuccess?.Invoke(Result));
+                LifecycleFrame.RunNextFrame(() => onSuccess?.Invoke(Result));
                 return this;
             }
             
@@ -68,7 +69,7 @@ namespace AceLand.TaskUtils
             
             if (IsFault)
             {
-                Promise.Dispatcher.Run(() => CatchHandle?.Invoke(Exception));
+                LifecycleFrame.RunNextFrame(() => CatchHandle?.Invoke(Exception));
                 return this;
             }
             
@@ -84,7 +85,7 @@ namespace AceLand.TaskUtils
             if (IsFault)
             {
                 if (Exception is TException targetException)
-                    Promise.Dispatcher.Run(() => onError?.Invoke(targetException));
+                    LifecycleFrame.RunNextFrame(() => onError?.Invoke(targetException));
                 return this;
             }
             
@@ -98,7 +99,7 @@ namespace AceLand.TaskUtils
             
             if (IsCompleted)
             {
-                Promise.Dispatcher.Run(onFinal);
+                LifecycleFrame.RunNextFrame(onFinal);
                 return this;
             }
             
@@ -109,8 +110,7 @@ namespace AceLand.TaskUtils
         private void HandleTask(Task<T> task)
         {
             TokenSource = new CancellationTokenSource();
-            var linkedToken = Promise.LinkedOrApplicationAliveToken(TokenSource,
-                out var linkedTokenSource);
+            var linkedToken = LifecycleToken.CreateLinked(TokenSource.Token);
 
             task.ContinueWith(t =>
                 {
@@ -143,12 +143,12 @@ namespace AceLand.TaskUtils
 
                         if (!IsFault)
                         {
-                            Promise.Dispatcher.Run(() => OnSuccess?.Invoke(Result));
+                            LifecycleFrame.RunNextFrame(() => OnSuccess?.Invoke(Result));
                             Success();
                         }
                     }
 
-                    OnFinalize(linkedTokenSource);
+                    OnFinalize(linkedToken);
                 },
                 cancellationToken: linkedToken
             );

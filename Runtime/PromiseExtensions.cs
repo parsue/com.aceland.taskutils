@@ -1,23 +1,12 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
-using AceLand.TaskUtils.Core;
 
 namespace AceLand.TaskUtils
 {
     public static class PromiseExtensions
     {
-        private static CancellationToken ApplicationAliveToken => 
-            PromiseHelper.AliveSystem.ApplicationAliveTokenSource.Token;
-        
-        public static void StartCoroutine(this IEnumerator enumerator) =>
-            Promise.Dispatcher.StartCoroutine(enumerator);
-        public static Promise StartCoroutineAsTask(this IEnumerator enumerator) =>
-            Promise.Dispatcher.StartCoroutineAsTask(enumerator);
-        
         public static Promise WhenAll(this Promise[] promises) =>
             Task.WhenAll(promises.Select(promise => promise.AsTask()).ToArray());
         public static Promise<T[]> WhenAll<T>(this Promise<T>[] promises) =>

@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using AceLand.Lifecycle;
 using AceLand.TaskUtils.Core;
 
 namespace AceLand.TaskUtils
@@ -40,7 +41,7 @@ namespace AceLand.TaskUtils
             
             if (IsSuccess)
             {
-                Dispatcher.Run(onSuccess);
+                LifecycleFrame.RunNextFrame(onSuccess);
                 return this;
             }
 
@@ -68,7 +69,7 @@ namespace AceLand.TaskUtils
             
             if (IsFault)
             {
-                Dispatcher.Run(() => onError(Exception));
+                LifecycleFrame.RunNextFrame(() => onError?.Invoke(Exception));
                 return this;
             }
 
@@ -84,7 +85,7 @@ namespace AceLand.TaskUtils
             if (IsFault)
             {
                 if (Exception is TException targetException)
-                    Dispatcher.Run(() => onError?.Invoke(targetException));
+                    LifecycleFrame.RunNextFrame(() => onError?.Invoke(targetException));
                 
                 return this;
             }
@@ -99,7 +100,7 @@ namespace AceLand.TaskUtils
 
             if (IsCompleted)
             {
-                Dispatcher.Run(onFinal);
+                LifecycleFrame.RunNextFrame(onFinal);
                 return this;
             }
 
@@ -110,8 +111,8 @@ namespace AceLand.TaskUtils
         private void HandleTask(Task task)
         {
             TokenSource = new CancellationTokenSource();
-            var linkedToken = LinkedOrApplicationAliveToken(TokenSource,
-                out var linkedTokenSource);
+            LifecycleToken.CreateLinked(TokenSource.Token);
+            var linkedToken = LifecycleToken.CreateLinked(TokenSource.Token);
 
             task.ContinueWith(t =>
                 {
@@ -144,12 +145,12 @@ namespace AceLand.TaskUtils
 
                         if (!IsFault)
                         {
-                            Dispatcher.Run(OnSuccess);
+                            LifecycleFrame.RunNextFrame(OnSuccess);
                             Success();
                         }
                     }
 
-                    OnFinalize(linkedTokenSource);
+                    OnFinalize(linkedToken);
                 },
                 cancellationToken: linkedToken
             );

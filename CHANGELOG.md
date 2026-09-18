@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [3.0.0] - 2026-09-18
+### Added
+- WaitForScaledTime(), WaitForNextFrame(), WaitForNextFixedFrame(), WaitForFrames() 
+### Modified
+- Ready for CoreCLR, auto clearup static values
+- [Dependence] use Lifecycle, remove other
+### Removed
+- duplicated functions with Lifecycle 
+
+---
+
 ## [2.2.5] - 2026-03-20
 ### Fixed
 - [Promise] Cancellation Token already disposed issue on dispose a promise handle

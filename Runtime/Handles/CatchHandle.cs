@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using AceLand.Disposable;
+using AceLand.Lifecycle;
 using UnityEngine;
 
 namespace AceLand.TaskUtils.Handles
@@ -158,7 +159,7 @@ namespace AceLand.TaskUtils.Handles
             public void Invoke(T exception)
             {
                 Exception = exception;
-                Promise.Dispatcher.Run(() => Action?.Invoke(exception));
+                LifecycleFrame.RunNextFrame(() => Action?.Invoke(exception));
             }
             
             public void AddHandler(Action<T> handler)

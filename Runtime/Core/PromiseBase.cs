@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using AceLand.Lifecycle;
 using AceLand.TaskUtils.Handles;
 
 namespace AceLand.TaskUtils.Core
@@ -18,7 +19,7 @@ namespace AceLand.TaskUtils.Core
         {
             base.Cancel();
             
-            if (TokenSource != null && !TokenSource.IsCancellationRequested)
+            if (TokenSource is { IsCancellationRequested: false })
                 TokenSource?.Cancel();
             
             CatchHandle.Dispose();
@@ -47,13 +48,13 @@ namespace AceLand.TaskUtils.Core
             }
         }
 
-        protected void OnFinalize(CancellationTokenSource linkedTokenSource)
+        protected void OnFinalize(CancellationToken linkedToken)
         {
             IsCompleted = true;
             if (Disposed) return;
 
-            Promise.Dispatcher.Run(OnFinal);
-            Promise.Dispatcher.Run(Continuation);
+            LifecycleFrame.RunNextFrame(OnFinal, linkedToken);
+            LifecycleFrame.RunNextFrame(Continuation, linkedToken);
         }
     }
 }
